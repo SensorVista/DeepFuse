@@ -1,0 +1,127 @@
+# CUDA DNN Framework: Scalable Transformers on Commodity GPUs
+
+This project demonstrates CUDA functionality and provides a advanced test environment for CUDA operations. 
+Helps breaks the VRAM ceiling, cuts framework overhead, and makes billion-parameter models viable on RTX 4090-class hardware.
+Azure, MetaAI, GoogleDeepMind, xAI, and DeepSeek scaled with big budgets. We scale with efficiency.
+If you're serious about building the next-gen AGI, this is where it starts.
+
+## Features
+
+### Layer-Serialized Architecture
+- **Streaming Execution**: Custom implementation of layer-by-layer computation
+- **Memory Management**: Advanced techniques for parameter streaming and caching
+- **Attention Optimization**: Novel approaches to sliding-window attention
+- **Gradient Handling**: Efficient gradient accumulation and recomputation
+
+### CUDA Optimizations
+- **Kernel Fusion**: Implementation of fused transformer operations
+- **Memory Streaming**: Optimized host-device transfer patterns
+- **Stream Management**: Advanced scheduling for layer execution
+- **Asynchronous Operations**: Non-blocking memory transfers and computations
+
+### Transformer Features
+- **QKV Attention**: Optimized implementation with custom CUDA kernels
+- **Rotary Embeddings**: Efficient positional encoding
+- **Layer Normalization**: In-place operations with numerical stability
+- **Residual Connections**: Memory-efficient implementation
+
+### Benefits
+- **Train GPT-class models on consumer GPUs**  
+  Pretrain and fine-tune billion-parameter transformers on devices like the RTX 4090 or older multi-GPU rigs, without needing massive VRAM.
+
+- **Bypass framework overhead**  
+  Fully custom CUDA/C++ implementation with zero reliance on PyTorch, TensorFlow, or external autograd frameworks.
+
+- **Stream layers, not models**  
+  Execute arbitrarily deep networks by paging individual layers in and out of GPU memory, enabling transformer stacks that exceed device limits.
+
+- **Disk-backed execution**  
+  Weight tensors, optimizer state, and activations are managed off-GPU using pinned host memory and NVMe streaming, removing memory ceilings.
+
+- **Precision without compromise**  
+  Supports Tensor Core acceleration, FP16/BF16 mixed precision, and warp-level primitives for fused, high-throughput kernels.
+
+- **Memory-aware scheduling**  
+  Optimized for cache hierarchy, shared memory tiling, and async overlap of I/O and compute using cooperative groups and CUDA streams.
+
+- **Token-efficient transformer scaling**  
+  Designed for long sequence processing using rotary embeddings, sliding window attention, and Flash-style optimizations.
+
+- **Research-grade control**  
+  Every byte, warp, and instruction is under explicit control—ideal for systems-level AI research, AGI experimentation, and real-time inference.
+
+- **Granular checkpointing**
+  Supports checkpoints for the entire model, individual layers, weights, activations, and input batches. Enables precise recovery and flexible, layer-wise debugging.  
+
+## Prerequisites
+
+- CUDA Toolkit (compatible with your GPU)
+- CMake (version 3.8 or higher)
+- Visual Studio 2019 or later (for Windows) or GCC/G++ (for Linux)
+
+## Quick Start
+
+### Windows (Release):
+
+```powershell
+cmake --build build --config Release
+```
+
+### Windows (x64 VS solution + projects):
+
+```powershell
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+```
+
+### Linux
+
+```bash
+mkdir build
+cd build
+cmake ..
+make
+```
+
+## Troubleshooting
+
+- Ensure CUDA Toolkit is properly installed and the environment variables are set correctly
+- For Windows, make sure you're using a compatible version of Visual Studio
+- For Linux, ensure you have the necessary CUDA development packages installed
+
+
+### Strategic Outcome
+
+This technique transforms traditional VRAM-bound training into a time-scheduled, memory-streamed pipeline. It enables research and pretraining of large-scale transformer models on accessible hardware, unlocking high-end LLM capabilities for small-lab or independent development environments.
+
+## Performance Analysis
+
+### Training Performance
+- Model size support: Up to 13B parameters on 24GB GPU
+- Training throughput: [X] tokens/second
+- Memory efficiency: [Y]% reduction in peak VRAM usage
+- GPU utilization: [Z]% average utilization
+
+### Inference Performance
+- Inference speed: [X] tokens/second
+- Latency: [Y] ms per token
+- Memory footprint: [Z] GB
+- Throughput: [A] tokens/second at maximum batch size
+
+### Comparative Analysis
+- VRAM usage vs. traditional approaches
+- Training time analysis
+
+### Scaling Analysis
+- 
+- Multi-GPU scaling: throughput and efficiency across devices
+- Distributed pipeline: layer/data parallelism with disk-backed streaming
+- VRAM overflow: swap and memory management for oversized models
+
+## License
+
+All rights reserved.
+
+Copyright © 2025 SensorVista, LLC
+
+This code and documentation are provided for reference only.  
+No license is granted for use, modification, or redistribution without explicit written permission.

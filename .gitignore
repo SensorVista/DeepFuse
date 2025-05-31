@@ -1,0 +1,81 @@
+# Exclude all root-level hidden files and folders
+/.* 
+
+# But keep .gitignore itself
+!.gitignore
+
+# Build directories
+build/
+out/
+bin/
+lib/
+cmake-build-*/
+
+# IDE specific files
+*.swp
+*.swo
+*~
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# CUDA specific
+*.cubin
+*.ptx
+*.fatbin
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+*.cmake
+!cmake/*.cmake
+Makefile
+*.ninja
+.cmake/
+
+# Dataset directories
+models/
+data/
+*.h5
+*.hdf5
+*.npy
+*.npz
+*.bin
+*.dat
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db 

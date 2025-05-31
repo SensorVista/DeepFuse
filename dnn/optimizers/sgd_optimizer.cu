@@ -1,0 +1,81 @@
+#include "dnn/optimizers/sgd_optimizer.cuh"
+#include "dnn/utils/common.cuh"
+
+#include <cuda_runtime.h>
+
+namespace lenet5 {
+
+template<typename T>
+__global__ void sgd_update_kernel(
+    T* param,           // Parameter to update
+    const T* grad,      // Gradient
+    T* velocity,        // Velocity buffer
+    T learning_rate,    // Learning rate
+    T momentum,         // Momentum coefficient
+    T weight_decay,     // Weight decay coefficient
+    size_t size         // Size of the parameter
+) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) {
+        // Apply weight decay
+        T grad_with_decay = grad[idx] + weight_decay * param[idx];
+        
+        // Update velocity
+        velocity[idx] = momentum * velocity[idx] - learning_rate * grad_with_decay;
+        
+        // Update parameter
+        param[idx] += velocity[idx];
+    }
+}
+
+// param = param + velocity
+// velocity = momentum * velocity - lr * (grad + weight_decay * param)
+
+template<typename T>
+void SGDOptimizer<T>::step() {
+    for (size_t i = 0; i < this->parameters_.size(); ++i) {
+
+        auto* param = this->parameters_[i];
+        size_t size = param->size();
+        
+        int block_size = 256;
+        int num_blocks = (size + block_size - 1) / block_size;
+    
+        sgd_update_kernel<<<num_blocks, block_size>>>(
+            param->data(),
+            this->gradients_[i]->data(),
+            velocities_[i].data(),
+            learning_rate_,
+            momentum_,
+            weight_decay_,
+            size
+        );
+
+        utils::THROW_CUDA_EX();
+    }
+}
+
+template<typename T>
+void SGDOptimizer<T>::zero_grad() {
+    for (auto* grad : this->gradients_) {
+        grad->fill(0);
+    }
+}
+
+template<typename T>
+void SGDOptimizer<T>::update_parameters(const std::vector<tensor<T>*>& parameters, const std::vector<tensor<T>*>& gradients) {
+    Optimizer<T>::update_parameters(parameters, gradients);
+
+    velocities_.clear();
+    velocities_.reserve(parameters.size());
+    for (const auto* param : parameters) {
+        velocities_.emplace_back(param->shape());
+        velocities_.back().fill(0);
+    }
+}
+
+// Explicit template instantiations
+template class SGDOptimizer<float>;  // FP32
+// template class SGDOptimizer<__half>;
+
+} // namespace lenet5 
