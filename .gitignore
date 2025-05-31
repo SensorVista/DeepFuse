@@ -57,8 +57,7 @@ Makefile
 .cmake/
 
 # Dataset directories
-models/
-data/
+datasets/
 *.h5
 *.hdf5
 *.npy
