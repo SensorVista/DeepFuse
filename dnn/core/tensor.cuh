@@ -70,7 +70,9 @@ public:
 template class tensor<float>;  // FP32
 template class tensor<__half>; // FP16
 template class tensor<__nv_bfloat16>; // BF16
-template class tensor<int8_t>; // Quantized tensor
+template class tensor<int8_t>;
+template class tensor<unsigned char>; // Explicitly instantiate for unsigned char
+template class tensor<bool>;
 
 // Concrete aliases for commonly used tensor types
 using tensorf   = tensor<float>;    // 32-bit float tensor

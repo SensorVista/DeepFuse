@@ -20,6 +20,9 @@ public:
         const std::vector<tensor<T>*>& parameters,
         const std::vector<tensor<T>*>& gradients) override;
 
+    T learning_rate() const override { return learning_rate_; }
+    void set_learning_rate(T new_lr) override { learning_rate_ = new_lr; }
+
 private:
     T learning_rate_;
     T momentum_;

@@ -86,6 +86,10 @@ public:
         loss_ = std::move(loss);
     }
 
+    // Expose optimizer's learning rate methods
+    T learning_rate() const { return optimizer_->learning_rate(); }
+    void set_learning_rate(T new_lr) { optimizer_->set_learning_rate(new_lr); }
+
 protected:
     std::unique_ptr<Loss<T>> loss_;
     std::unique_ptr<Optimizer<T>> optimizer_;

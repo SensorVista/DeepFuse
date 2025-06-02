@@ -24,7 +24,29 @@ public:
         // Pool1: 2x2 average pooling (stride 2)
         this->layers_.push_back(std::make_unique<AvgPoolLayer<T>>(2, 2));
         // Conv2: 6x14x14 -> 16x10x10
-        this->layers_.push_back(std::make_unique<ConvLayer<T>>(6, 16, std::vector<size_t>{5, 5}, 1, 0));
+
+        // Per Yann LeCun's paper, the C3 layer uses a sparse connectivity mask
+        // This is a 16x6 matrix that specifies which input maps are connected to each output map
+        // The matrix is defined as follows:
+        const std::vector<std::vector<bool>> c3_connection_table = {
+         {1, 0, 0, 0, 0, 1},  // Output map 0 connects to input maps 0 and 5
+        {0, 1, 0, 0, 1, 0},  // Output map 1: inputs 1 and 4
+        {0, 0, 1, 1, 0, 0},  // etc.
+        {1, 1, 0, 0, 0, 0},
+        {0, 1, 1, 0, 0, 0},
+        {0, 0, 1, 1, 0, 0},
+        {0, 0, 0, 1, 1, 0},
+        {0, 0, 0, 0, 1, 1},
+        {1, 0, 0, 0, 1, 0},
+        {0, 1, 0, 1, 0, 0},
+        {0, 0, 1, 0, 1, 0},
+        {0, 0, 0, 1, 0, 1},
+        {1, 0, 1, 0, 0, 0},
+        {0, 1, 0, 0, 0, 1},
+        {1, 0, 0, 1, 0, 0},
+        {0, 0, 1, 0, 0, 1}
+        };
+        this->layers_.push_back(std::make_unique<ConvLayer<T>>(6, 16, std::vector<size_t>{5, 5}, 1, 0, c3_connection_table));
         // Tanh activation after Conv2
         this->layers_.push_back(std::make_unique<TanhLayer<T>>());
         // Pool2: 2x2 average pooling (stride 2)

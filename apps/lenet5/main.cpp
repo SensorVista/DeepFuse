@@ -57,6 +57,12 @@ void train(
     for (size_t epoch = 0; epoch < num_epochs; ++epoch) {
         float total_loss = 0;
 
+        // Learning rate schedule
+        if (epoch == 10 || epoch == 20) {
+            network->set_learning_rate(network->learning_rate() * 0.1f);
+            std::cout << "Learning rate reduced to: " << network->learning_rate() << std::endl;
+        }
+
         // Ensure every epoch gets a new sample order
         std::shuffle(indices.begin(), indices.end(), rng);
 
@@ -73,7 +79,7 @@ void train(
 
             for (int b = 0; b < current_batch_size; ++b) {
                 for (int j = 0; j < input_dim * input_dim; ++j) {
-                    input_data[b * input_dim * input_dim + j] = train_images[indices[i + b]][j] / 255.0f;
+                    input_data[b * input_dim * input_dim + j] = (train_images[indices[i + b]][j] - 127.5f) / 127.5f;
                 }
                 
                 size_t label = static_cast<size_t>(train_labels[indices[i + b]]);
@@ -97,7 +103,12 @@ void train(
         int correct_predictions = 0;
         for (int i = 0; i < num_test_images; ++i) {
             lenet5::tensor<float> input({ 1, 1, input_dim, input_dim });
-            input.upload(test_images[i].data());
+            // Normalize test images similarly
+            std::vector<float> single_test_image_data(input_dim * input_dim);
+            for(int j = 0; j < input_dim * input_dim; ++j) {
+                single_test_image_data[j] = (test_images[i][j] - 127.5f) / 127.5f;
+            }
+            input.upload(single_test_image_data.data());
 
             auto output = network->forward(input);
             std::vector<float> host_output(output.size());
@@ -170,7 +181,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Loaded " << test_labels.size() << " test labels." << std::endl;
 
         // Create LeNet-5 network with float precision
-        lenet5::LeNet5<float> network(0.005f, 0.9f, 0.0f);
+        lenet5::LeNet5<float> network(0.01f, 0.9f, 0.0f);
 
         // Begin training
         const int num_epochs = 30;

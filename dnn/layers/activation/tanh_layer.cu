@@ -10,7 +10,7 @@ template<typename T>
 __global__ void tanh_forward_kernel(T* output, const T* input, size_t size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
-        output[idx] = tanh(input[idx]);
+        output[idx] = static_cast<T>(1.7159f * tanh(2.0f/3.0f * input[idx]));
     }
 }
 
@@ -18,8 +18,12 @@ template<typename T>
 __global__ void tanh_backward_kernel(T* grad_input, const T* grad_output, const T* input, size_t size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
-        T tanh_x = tanh(input[idx]);
-        grad_input[idx] = grad_output[idx] * (1.0f - tanh_x * tanh_x);
+        // The output of the forward pass is A * tanh(S * x)
+        // The derivative with respect to x is A * S * (1 - tanh(S * x)^2)
+        // We have grad_output (dLoss/dOutput) and we need dLoss/dInput = dLoss/dOutput * dOutput/dInput
+        T tanh_sx = tanh(2.0f/3.0f * input[idx]);
+        T activation_derivative = static_cast<T>(1.7159f * (2.0f/3.0f) * (1.0f - tanh_sx * tanh_sx));
+        grad_input[idx] = grad_output[idx] * activation_derivative;
     }
 }
 

@@ -10,7 +10,7 @@ namespace lenet5 {
 template<typename T>
 class ConvLayer : public Layer<T> {
 public:
-    ConvLayer(size_t in_channels, size_t out_channels, const std::vector<size_t>& kernel_size, size_t stride, size_t padding)
+    ConvLayer(size_t in_channels, size_t out_channels, const std::vector<size_t>& kernel_size, size_t stride, size_t padding, const std::vector<std::vector<bool>>& connection_table = {})
         : in_channels_(in_channels)
         , out_channels_(out_channels)
         , kernel_size_(kernel_size)
@@ -19,7 +19,21 @@ public:
         , weights_({out_channels, in_channels, kernel_size[0], kernel_size[1]})
         , bias_({out_channels})
         , grad_weights_({out_channels, in_channels, kernel_size[0], kernel_size[1]})
-        , grad_bias_({out_channels}) {
+        , grad_bias_({out_channels})
+        , connection_mask_dev_({out_channels, in_channels})
+        , use_sparse_connectivity_(connection_table.size() > 0) {
+        if (use_sparse_connectivity_) {
+            if (connection_table.size() != out_channels || connection_table[0].size() != in_channels) {
+                throw std::runtime_error("Connection table dimensions do not match in/out channels.");
+            }
+            std::vector<uint8_t> host_connection_mask(out_channels * in_channels);
+            for (size_t i = 0; i < out_channels; ++i) {
+                for (size_t j = 0; j < in_channels; ++j) {
+                    host_connection_mask[i * in_channels + j] = connection_table[i][j] ? 1 : 0;
+                }
+            }
+            connection_mask_dev_.upload(host_connection_mask.data());
+        }
         initialize_weights();
     }
 
@@ -41,6 +55,8 @@ private:
     tensor<T> bias_;
     tensor<T> grad_weights_;
     tensor<T> grad_bias_;
+    tensor<uint8_t> connection_mask_dev_; // Flattened mask for device
+    bool use_sparse_connectivity_;
 
     void initialize_weights() {
         std::random_device rd;

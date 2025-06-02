@@ -15,6 +15,7 @@ __global__ void conv2d_forward(
     const T* input,      // [batch_size, in_channels, in_height, in_width]
     const T* weight,     // [out_channels, in_channels, kernel_size, kernel_size]
     const T* bias,       // [out_channels]
+    const uint8_t* connection_mask, // [out_channels, in_channels]
     int batch_size,
     int in_channels,
     int out_channels,
@@ -39,6 +40,11 @@ __global__ void conv2d_forward(
     float acc = 0.0f;
 
     for (int c_in = 0; c_in < in_channels; ++c_in) {
+        // Check connectivity mask
+        if (connection_mask && connection_mask[c_out * in_channels + c_in] == 0) {
+            continue;
+        }
+
         for (int ky = 0; ky < kernel_size; ++ky) {
             for (int kx = 0; kx < kernel_size; ++kx) {
                 int in_y = h_out * stride + ky - padding;
@@ -73,6 +79,7 @@ __global__ void conv2d_backward(
     T* grad_input, 
     const T* grad_output, 
     const T* weight,
+    const uint8_t* connection_mask, // [out_channels, in_channels]
     int N, 
     int C_in, 
     int C_out,
@@ -95,6 +102,11 @@ __global__ void conv2d_backward(
 
     float grad = 0.0f;
     for (int c_out = 0; c_out < C_out; ++c_out) {
+        // Check connectivity mask
+        if (connection_mask && connection_mask[c_out * C_in + c_in] == 0) {
+            continue;
+        }
+
         for (int ky = 0; ky < K; ++ky) {
             for (int kx = 0; kx < K; ++kx) {
                 int out_y = (h + padding - ky) / stride;
@@ -116,6 +128,7 @@ __global__ void conv2d_backward(
 template<typename T>
 __global__ void conv_weight_grad_2d(
     const T* input, const T* grad_output, T* grad_weight,
+    const uint8_t* connection_mask, // [out_channels, in_channels]
     int N, int C_in, int C_out,
     int H_in, int W_in,
     int H_out, int W_out,
@@ -129,6 +142,12 @@ __global__ void conv_weight_grad_2d(
     int ky = (idx / K) % K;
     int c_in = (idx / (K * K)) % C_in;
     int c_out = idx / (C_in * K * K);
+
+    // Check connectivity mask
+    if (connection_mask && connection_mask[c_out * C_in + c_in] == 0) {
+        grad_weight[idx] = 0.0f; // No connection, so gradient is zero
+        return;
+    }
 
     float grad = 0.0f;
     for (int n = 0; n < N; ++n) {
@@ -221,6 +240,7 @@ tensor<T> ConvLayer<T>::forward(const tensor<T>& input) {
         input.data(),
         weights_.data(),
         bias_.data(),
+        use_sparse_connectivity_ ? connection_mask_dev_.data() : nullptr,
         static_cast<int>(batch_size),
         static_cast<int>(in_channels_),
         static_cast<int>(out_channels_),
@@ -259,6 +279,7 @@ tensor<T> ConvLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& 
         int blocks = (total + threads - 1) / threads;
         conv2d_backward<T><<<blocks, threads>>> (
             grad_input.data(), grad_output.data(), weights_.data(),
+            use_sparse_connectivity_ ? connection_mask_dev_.data() : nullptr,
             N, C_in, C_out, H_in, W_in, H_out, W_out, K, stride_, padding_);
     }
 
@@ -269,6 +290,7 @@ tensor<T> ConvLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& 
         int blocks = (total + threads - 1) / threads;
         conv_weight_grad_2d<T><<<blocks, threads>>> (
             input.data(), grad_output.data(), grad_weights_.data(),
+            use_sparse_connectivity_ ? connection_mask_dev_.data() : nullptr,
             N, C_in, C_out, H_in, W_in, H_out, W_out, K, stride_, padding_);
     }
 

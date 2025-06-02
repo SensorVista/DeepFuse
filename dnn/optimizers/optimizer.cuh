@@ -26,6 +26,10 @@ public:
         gradients_ = gradients;
     }
 
+    // Get and set learning rate (virtual methods)
+    virtual T learning_rate() const = 0;
+    virtual void set_learning_rate(T new_lr) = 0;
+
 protected:
     std::vector<tensor<T>*> parameters_;       // model parameters (weights/biases)
     std::vector<tensor<T>*> gradients_;        // gradients for those parameters
