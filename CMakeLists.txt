@@ -47,3 +47,4 @@ add_subdirectory(tests)
 # Add apps
 add_subdirectory(apps/lenet5)
 add_subdirectory(apps/perceptron)
+add_subdirectory(apps/resnet20)

@@ -57,11 +57,11 @@ void train(
     for (size_t epoch = 0; epoch < num_epochs; ++epoch) {
         float total_loss = 0;
 
-        // Learning rate schedule
-        if (epoch == 10 || epoch == 20) {
-            network->set_learning_rate(network->learning_rate() * 0.1f);
-            std::cout << "Learning rate reduced to: " << network->learning_rate() << std::endl;
-        }
+        // // Learning rate schedule
+        // if (epoch == 10 || epoch == 20) {
+        //     network->set_learning_rate(network->learning_rate() * 0.1f);
+        //     std::cout << "Learning rate reduced to: " << network->learning_rate() << std::endl;
+        // }
 
         // Ensure every epoch gets a new sample order
         std::shuffle(indices.begin(), indices.end(), rng);
@@ -181,10 +181,12 @@ int main(int argc, char* argv[]) {
         std::cout << "Loaded " << test_labels.size() << " test labels." << std::endl;
 
         // Create LeNet-5 network with float precision
-        lenet5::LeNet5<float> network(0.01f, 0.9f, 0.0f);
+        lenet5::LeNet5<float> network;
+        network.set_loss(std::make_unique<lenet5::CrossEntropyLoss<float>>());
+        network.set_optimizer(std::make_unique<lenet5::SGDOptimizer<float>>(0.01f, 0.9f, 0.0f));
 
         // Begin training
-        const int num_epochs = 30;
+        const int num_epochs = 10;
         const int batch_size = 64;
 
         auto pad_images_to_32x32 = [](const std::vector<std::vector<float>>& images28, int pad_y, int pad_x) {

@@ -13,7 +13,7 @@ namespace lenet5 {
 template<typename T>
 class Perceptron : public TrainingModel<T> {
 public:
-    Perceptron(size_t input_size, size_t hidden_size, size_t output_size, T learning_rate = 0.01f) 
+    Perceptron(size_t input_size, size_t hidden_size, size_t output_size) 
         : TrainingModel<T>() {
         // Create MLP architecture
         // Input -> Hidden layer
@@ -23,10 +23,6 @@ public:
         // Hidden -> Output layer
         this->layers_.push_back(std::make_unique<FullyConnectedLayer<T>>(hidden_size, output_size));
         this->layers_.push_back(std::make_unique<SigmoidLayer<T>>());
-
-        // Set default loss and optimizer
-        this->set_loss(std::make_unique<BinaryCrossEntropyLoss<T>>());
-        this->set_optimizer(std::make_unique<SGDOptimizer<T>>(learning_rate, 0.9f));
     }
 };
 

@@ -20,7 +20,8 @@ namespace lenet5 {
 template<typename T>
 class TrainingModel : public InferenceModel<T> {
 public:
-    explicit TrainingModel(bool enable_training = false) : InferenceModel<T>() {}
+    explicit TrainingModel(bool enable_training = false) : InferenceModel<T>() {
+    }
 
     virtual ~TrainingModel() = default;
 

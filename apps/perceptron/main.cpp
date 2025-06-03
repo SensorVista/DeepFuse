@@ -42,7 +42,9 @@ int main() {
         }
 
         // Create Perceptron network
-        lenet5::Perceptron<float> network(input_dim, 4, output_dim, 0.001f);  // Reduced learning rate from 0.01 to 0.001
+        lenet5::Perceptron<float> network(input_dim, 4, output_dim);
+        network.set_loss(std::make_unique<lenet5::BinaryCrossEntropyLoss<float>>());
+        network.set_optimizer(std::make_unique<lenet5::SGDOptimizer<float>>(0.001f, 0.9f));
 
         // Training parameters
         const size_t num_epochs = 1000;

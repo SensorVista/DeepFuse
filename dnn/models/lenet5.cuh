@@ -15,7 +15,7 @@ namespace lenet5 {
 template<typename T>
 class LeNet5 : public TrainingModel<T> {
 public:
-    explicit LeNet5(T learning_rate = 0.01f, T momentum = 0.0f, T weight_decay = 0.0f) : TrainingModel<T>() {
+    explicit LeNet5() : TrainingModel<T>() {
         // Create LeNet-5 architecture
         // Conv1: 1x32x32 -> 6x28x28
         this->layers_.push_back(std::make_unique<ConvLayer<T>>(1, 6, std::vector<size_t>{5, 5}, 1, 0));
@@ -63,10 +63,6 @@ public:
         this->layers_.push_back(std::make_unique<TanhLayer<T>>());
         // FC2 (output): Fully connected, 10 units
         this->layers_.push_back(std::make_unique<FullyConnectedLayer<T>>(84, 10));
-
-        // Set default loss and optimizer
-        this->set_loss(std::make_unique<CrossEntropyLoss<T>>());
-        this->set_optimizer(std::make_unique<SGDOptimizer<T>>(learning_rate, momentum, weight_decay));
     }
 };
 

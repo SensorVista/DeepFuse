@@ -1,5 +1,5 @@
 # Define app name
-set(TARGET_NAME perceptron)
+set(TARGET_NAME resnet20)
 
 # Collect application sources
 file(GLOB SOURCES CONFIGURE_DEPENDS
