@@ -2,6 +2,7 @@
 #include <dnn/losses/cross_entropy.cuh>
 #include <dnn/optimizers/sgd_optimizer.cuh>
 #include <dnn/utils/common.cuh>
+#include <dnn/core/device.cuh>
 
 #include <iostream>
 #include <filesystem>
@@ -41,6 +42,10 @@ void print_usage(const char* program_name) {
 
 int main(int argc, char* argv[]) {
     try {
+        // Initialize CUDA device
+        dnn::Cuda cuda;
+        cuda.dump_info();
+
         if (argc != 2) {
             print_usage(argv[0]);
             return 1;

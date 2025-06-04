@@ -1,4 +1,5 @@
 #include <dnn/models/perceptron.cuh>
+#include <dnn/core/device.cuh>
 
 #include <iostream>
 #include <filesystem>
@@ -8,6 +9,10 @@
 
 int main() {
     try {
+        // Initialize CUDA device
+        dnn::Cuda cuda;
+        cuda.dump_info();
+
         // Generate synthetic training data for binary classification
         int num_train_samples = 1000;
         int num_test_samples = 200;

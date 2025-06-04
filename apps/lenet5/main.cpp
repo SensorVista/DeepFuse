@@ -1,6 +1,7 @@
 #include <dnn/models/lenet5.cuh>
 #include <dnn/utils/mnist_loader.cuh>
 #include <dnn/utils/common.cuh>
+#include <dnn/core/device.cuh>
 
 #include <iostream>
 #include <filesystem>
@@ -133,11 +134,11 @@ void train(
 int main(int argc, char* argv[]) {
     int result = 0;
 
-    // Initialize cuDNN
-    cudnnHandle_t handle;
-    cudnnCreate(&handle);
-
     try {
+        // Initialize CUDA device
+        dnn::Cuda cuda;
+        cuda.dump_info();
+
         if (argc != 2) {
             print_usage(argv[0]);
             return 1;
@@ -218,9 +219,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error: " << e.what() << std::endl;
         result = 1;
     }
-
-    // Clean up
-    cudnnDestroy(handle);
 
     return result;
 } 
