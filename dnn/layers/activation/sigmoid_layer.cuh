@@ -3,7 +3,7 @@
 #include "dnn/core/layer.cuh"
 #include "dnn/core/tensor.cuh"
 
-namespace lenet5 {
+namespace dnn {
 
 // Sigmoid activation layer
 // f(x) = 1 / (1 + e^(-x))
@@ -21,4 +21,4 @@ public:
 
 template class SigmoidLayer<float>;
 
-} // namespace lenet5 
+} // namespace dnn 

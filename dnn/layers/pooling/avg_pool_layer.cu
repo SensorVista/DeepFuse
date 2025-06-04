@@ -3,15 +3,15 @@
 
 #include <cuda_runtime.h>
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 __global__ void avg_pool_forward_2d(
     T* output, const T* input,
-    size_t batch_size, size_t channels,
-    size_t height, size_t width,
-    size_t kernel_size, size_t stride,
-    size_t out_h, size_t out_w
+    int batch_size, int channels,
+    int height, int width,
+    int kernel_size, int stride,
+    int out_h, int out_w
 ) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= batch_size * channels * out_h * out_w) return;
@@ -29,7 +29,7 @@ __global__ void avg_pool_forward_2d(
             int ih = oh * stride + kh;
             int iw = ow * stride + kw;
             if (ih < height && iw < width) {
-                size_t in_idx = (
+                int in_idx = (
                     b * channels * height * width +
                     c * height * width +
                     ih * width + iw
@@ -46,10 +46,10 @@ __global__ void avg_pool_forward_2d(
 template<typename T>
 __global__ void avg_pool_backward_2d(
     T* grad_input, const T* grad_output,
-    size_t batch_size, size_t channels,
-    size_t height, size_t width,
-    size_t kernel_size, size_t stride,
-    size_t out_h, size_t out_w
+    int batch_size, int channels,
+    int height, int width,
+    int kernel_size, int stride,
+    int out_h, int out_w
 ) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= batch_size * channels * height * width) return;
@@ -63,7 +63,7 @@ __global__ void avg_pool_backward_2d(
     int ow = w / stride;
 
     if (oh < out_h && ow < out_w) {
-        size_t out_idx = (
+        int out_idx = (
             b * channels * out_h * out_w +
             c * out_h * out_w +
             oh * out_w + ow
@@ -74,25 +74,25 @@ __global__ void avg_pool_backward_2d(
 }
 
 template<typename T>
-AvgPoolLayer<T>::AvgPoolLayer(size_t kernel_size, size_t stride) 
+AvgPoolLayer<T>::AvgPoolLayer(int kernel_size, int stride) 
     : kernel_size_(kernel_size), stride_(stride) {}
 
 template<typename T>
 tensor<T> AvgPoolLayer<T>::forward(const tensor<T>& input) {
-    size_t batch_size = input.shape()[0];
-    size_t channels = input.shape()[1];
-    size_t height = input.shape()[2];
-    size_t width = input.shape()[3];
+    int batch_size = input.shape()[0];
+    int channels = input.shape()[1];
+    int height = input.shape()[2];
+    int width = input.shape()[3];
 
     if (height % stride_ != 0 || width % stride_ != 0) {
         throw std::runtime_error("AvgPoolLayer expects divisible dimensions");
     }
 
-    size_t out_h = height / stride_;
-    size_t out_w = width / stride_;
+    int out_h = height / stride_;
+    int out_w = width / stride_;
 
     tensor<T> output({ batch_size, channels, out_h, out_w });
-    size_t size = output.size();
+    int size = output.size();
 
     int block = 256;
     int grid = (size + block - 1) / block;
@@ -100,7 +100,7 @@ tensor<T> AvgPoolLayer<T>::forward(const tensor<T>& input) {
     avg_pool_forward_2d << <grid, block >> > (
         output.data(), input.data(),
         batch_size, channels, height, width,
-        kernel_size_, stride_,
+        static_cast<int>(kernel_size_), static_cast<int>(stride_),
         out_h, out_w
         );
 
@@ -111,18 +111,18 @@ tensor<T> AvgPoolLayer<T>::forward(const tensor<T>& input) {
 
 template<typename T>
 tensor<T> AvgPoolLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& input) {
-    size_t batch_size = input.shape()[0];
-    size_t channels = input.shape()[1];
-    size_t height = input.shape()[2];
-    size_t width = input.shape()[3];
+    int batch_size = input.shape()[0];
+    int channels = input.shape()[1];
+    int height = input.shape()[2];
+    int width = input.shape()[3];
 
-    size_t out_h = height / stride_;
-    size_t out_w = width / stride_;
+    int out_h = height / stride_;
+    int out_w = width / stride_;
 
     tensor<T> grad_input(input.shape());
     utils::CHECK_CUDA_EX(cudaMemset(grad_input.data(), 0, grad_input.size() * sizeof(T)));
 
-    size_t size = grad_input.size();
+    int size = grad_input.size();
     int block = 256;
     int grid = (size + block - 1) / block;
 
@@ -143,4 +143,4 @@ template class AvgPoolLayer<float>;  // FP32
 // template class AvgPoolLayer<__half>; // FP16
 // template class AvgPoolLayer<__nv_bfloat16>; // BF16
 
-} // namespace lenet5 
+} // namespace dnn 

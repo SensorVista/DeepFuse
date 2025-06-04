@@ -6,7 +6,7 @@
 #include <vector>
 #include <memory>
 
-namespace lenet5 {
+namespace dnn {
 
 // InferenceModel class
 // Defines the forward pass through the network
@@ -55,4 +55,4 @@ protected:
     T current_loss_ = 0;
 };
 
-} // namespace lenet5 
+} // namespace dnn 

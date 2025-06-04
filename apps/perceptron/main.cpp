@@ -9,10 +9,10 @@
 int main() {
     try {
         // Generate synthetic training data for binary classification
-        const size_t num_train_samples = 1000;
-        const size_t num_test_samples = 200;
-        const size_t input_dim = 2;  // 2D input features
-        const size_t output_dim = 1; // Binary classification
+        int num_train_samples = 1000;
+        int num_test_samples = 200;
+        int input_dim = 2;  // 2D input features
+        int output_dim = 1; // Binary classification
 
         // Create random number generator
         std::random_device rd;
@@ -23,7 +23,7 @@ int main() {
         std::vector<std::vector<float>> train_images(num_train_samples);
         std::vector<float> train_labels(num_train_samples);
         
-        for (size_t i = 0; i < num_train_samples; ++i) {
+        for (int i = 0; i < num_train_samples; ++i) {
             // Generate 2D input features
             train_images[i] = {dist(gen), dist(gen)};
             
@@ -36,43 +36,43 @@ int main() {
         std::vector<std::vector<float>> test_images(num_test_samples);
         std::vector<float> test_labels(num_test_samples);
         
-        for (size_t i = 0; i < num_test_samples; ++i) {
+        for (int i = 0; i < num_test_samples; ++i) {
             test_images[i] = {dist(gen), dist(gen)};
             test_labels[i] = (test_images[i][0] * test_images[i][1] > 0) ? 1.0f : 0.0f;
         }
 
         // Create Perceptron network
-        lenet5::Perceptron<float> network(input_dim, 4, output_dim);
-        network.set_loss(std::make_unique<lenet5::BinaryCrossEntropyLoss<float>>());
-        network.set_optimizer(std::make_unique<lenet5::SGDOptimizer<float>>(0.001f, 0.9f));
+        dnn::Perceptron<float> network(input_dim, 4, output_dim);
+        network.set_loss(std::make_unique<dnn::BinaryCrossEntropyLoss<float>>());
+        network.set_optimizer(std::make_unique<dnn::SGDOptimizer<float>>(0.001f, 0.9f));
 
         // Training parameters
-        const size_t num_epochs = 1000;
-        const size_t batch_size = 32;
+        int num_epochs = 1000;
+        int batch_size = 32;
 
         // Randomize samples
         std::vector<int> indices(num_train_samples);
         std::iota(indices.begin(), indices.end(), 0);
         std::mt19937 rng(std::random_device{}());
 
-        for (size_t epoch = 0; epoch < num_epochs; ++epoch) {
+        for (int epoch = 0; epoch < num_epochs; ++epoch) {
             float total_loss = 0;
             
             // Ensure every epoch gets a new sample order
             std::shuffle(indices.begin(), indices.end(), rng);
 
             // Training
-            for (size_t i = 0; i < num_train_samples; i += batch_size) {
-                size_t current_batch_size = std::min(batch_size, num_train_samples - i);
+            for (int i = 0; i < num_train_samples; i += batch_size) {
+                int current_batch_size = std::min(batch_size, num_train_samples - i);
 
-                lenet5::tensor<float> input({current_batch_size, input_dim});
-                lenet5::tensor<float> target({current_batch_size, output_dim});
+                dnn::tensor<float> input({current_batch_size, input_dim});
+                dnn::tensor<float> target({current_batch_size, output_dim});
 
                 // Convert batch data
                 std::vector<float> input_data(current_batch_size * input_dim);
                 std::vector<float> target_data(current_batch_size * output_dim);
 
-                for (size_t b = 0; b < current_batch_size; ++b) {
+                for (int b = 0; b < current_batch_size; ++b) {
                     // Copy input features
                     input_data[b * input_dim] = train_images[indices[i + b]][0];
                     input_data[b * input_dim + 1] = train_images[indices[i + b]][1];
@@ -92,8 +92,8 @@ int main() {
 
             // Validation
             int correct_predictions = 0;
-            for (size_t i = 0; i < num_test_samples; ++i) {
-                lenet5::tensor<float> input({1, input_dim});
+            for (int i = 0; i < num_test_samples; ++i) {
+                dnn::tensor<float> input({1, input_dim});
                 input.upload(test_images[i].data());
 
                 auto output = network.forward(input);
@@ -107,10 +107,10 @@ int main() {
                 }
             }
 
-            float accuracy = static_cast<float>(correct_predictions) / num_test_samples;
+            float accuracy = correct_predictions / static_cast<float>(num_test_samples);
             if (epoch % 100 == 0) {
                 std::cout << "Epoch " << (epoch + 1) << "/" << num_epochs << ": "
-                        << "Accuracy = " << (accuracy * 100.0f) << "%, "
+                        << "Accuracy = " << (accuracy * 100.0f) << "%" << ", "
                         << "Loss = " << (total_loss / (num_train_samples / batch_size))
                         << std::endl;
             }

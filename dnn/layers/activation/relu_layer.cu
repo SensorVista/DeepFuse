@@ -3,12 +3,12 @@
 
 #include <cuda_runtime.h>
 
-namespace lenet5 {
+namespace dnn {
 
 // CUDA kernel for ReLU forward pass
 template<typename T>
-__global__ void relu_forward_kernel(const T* input, T* output, size_t size) {
-    size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
+__global__ void relu_forward_kernel(const T* input, T* output, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         output[idx] = max(static_cast<T>(0.0f), input[idx]);
     }
@@ -16,8 +16,8 @@ __global__ void relu_forward_kernel(const T* input, T* output, size_t size) {
 
 // CUDA kernel for ReLU backward pass
 template<typename T>
-__global__ void relu_backward_kernel(const T* grad_output, const T* input, T* grad_input, size_t size) {
-    size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
+__global__ void relu_backward_kernel(const T* grad_output, const T* input, T* grad_input, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         grad_input[idx] = (input[idx] > static_cast<T>(0.0f)) ? grad_output[idx] : static_cast<T>(0.0f);
     }
@@ -27,7 +27,7 @@ __global__ void relu_backward_kernel(const T* grad_output, const T* input, T* gr
 template<typename T>
 tensor<T> ReLULayer<T>::forward(const tensor<T>& input) {
     tensor<T> output(input.shape());
-    size_t total_size = input.size();
+    int total_size = input.size();
 
     if (total_size == 0) return output;
 
@@ -45,7 +45,7 @@ tensor<T> ReLULayer<T>::forward(const tensor<T>& input) {
 template<typename T>
 tensor<T> ReLULayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& input) {
     tensor<T> grad_input(input.shape());
-    size_t total_size = input.size();
+    int total_size = input.size();
 
     if (total_size == 0) return grad_input;
 
@@ -61,4 +61,4 @@ tensor<T> ReLULayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& 
 // Explicit template instantiations
 template class ReLULayer<float>;
 
-} // namespace lenet5 
+} // namespace dnn 

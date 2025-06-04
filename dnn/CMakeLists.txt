@@ -30,7 +30,11 @@ target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_SOURCE_DIR})
 target_sources(${TARGET_NAME} PRIVATE ${HEADERS})
 
 # Link CUDA runtime for device code support
-target_link_libraries(${TARGET_NAME} PUBLIC CUDA::cudart)
+target_link_libraries(${TARGET_NAME} PUBLIC 
+    CUDA::cudart
+    "${CUDAToolkit_LIBRARY_DIR}/cudnn.lib"
+    "${CUDAToolkit_LIBRARY_DIR}/cublas.lib"
+)
 
 # Enable separable compilation for mixed CUDA modules and position independent code
 set_target_properties(${TARGET_NAME} PROPERTIES

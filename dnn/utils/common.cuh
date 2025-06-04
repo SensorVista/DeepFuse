@@ -6,8 +6,9 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <iostream>
 
-namespace lenet5::utils {
+namespace dnn::utils {
 
 inline void check_cuda_error(cudaError_t error, const char* file, int line) {
     if (error != cudaSuccess) {
@@ -26,6 +27,14 @@ inline void check_cuda_error(const char* file, int line) {
 #define CHECK_CUDA_EX(call) check_cuda_error(call, __FILE__, __LINE__)
 #define THROW_CUDA_EX() check_cuda_error(__FILE__, __LINE__)
 
+#define CHECK_CUDNN_EX(call) do { \
+    cudnnStatus_t err = call; \
+    if (err != CUDNN_STATUS_SUCCESS) { \
+        std::cerr << "cuDNN Error: " << cudnnGetErrorString(err) << " at " << __FILE__ << ":" << __LINE__ << std::endl; \
+        throw std::runtime_error("cuDNN error"); \
+    } \
+} while (0)
+
 inline void pad2d(
     const float* input_dev,  // [N, C, H_in, W_in]
     float* output_dev,       // [N, C, H_out, W_out]
@@ -38,5 +47,5 @@ void clip_grad_norm(
     std::vector<tensor<float>*>& gradients, 
     float max_norm);
 
-} // namespace lenet5::utils
+} // namespace dnn::utils
 

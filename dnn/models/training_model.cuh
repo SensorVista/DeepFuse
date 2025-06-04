@@ -12,7 +12,7 @@
 #include <sstream>
 #include <string>
 
-namespace lenet5 {
+namespace dnn {
 
 // TrainingModel class inherits from InferenceModel
 // Adds support loss function, optimizers to the model and training methods
@@ -59,7 +59,7 @@ public:
         cudaDeviceSynchronize();
         
         // Clip gradients
-        lenet5::utils::clip_grad_norm(optimizer_->gradients(), 1.0f);
+        dnn::utils::clip_grad_norm(optimizer_->gradients(), 1.0f);
 
         // Update parameters
         optimizer_->step();
@@ -97,4 +97,4 @@ protected:
 
 };
 
-} // namespace lenet5 
+} // namespace dnn 

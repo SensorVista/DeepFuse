@@ -10,7 +10,7 @@
 #include "../optimizers/sgd_optimizer.cuh"
 #include <memory>
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 class LeNet5 : public TrainingModel<T> {
@@ -18,7 +18,7 @@ public:
     explicit LeNet5() : TrainingModel<T>() {
         // Create LeNet-5 architecture
         // Conv1: 1x32x32 -> 6x28x28
-        this->layers_.push_back(std::make_unique<ConvLayer<T>>(1, 6, std::vector<size_t>{5, 5}, 1, 0));
+        this->layers_.push_back(std::make_unique<ConvLayer<T>>(1, 6, std::vector<int>{5, 5}, 1, 0));
         // Tanh activation after Conv1
         this->layers_.push_back(std::make_unique<TanhLayer<T>>());
         // Pool1: 2x2 average pooling (stride 2)
@@ -46,13 +46,13 @@ public:
         {1, 0, 0, 1, 0, 0},
         {0, 0, 1, 0, 0, 1}
         };
-        this->layers_.push_back(std::make_unique<ConvLayer<T>>(6, 16, std::vector<size_t>{5, 5}, 1, 0, c3_connection_table));
+        this->layers_.push_back(std::make_unique<ConvLayer<T>>(6, 16, std::vector<int>{5, 5}, 1, 0, c3_connection_table));
         // Tanh activation after Conv2
         this->layers_.push_back(std::make_unique<TanhLayer<T>>());
         // Pool2: 2x2 average pooling (stride 2)
         this->layers_.push_back(std::make_unique<AvgPoolLayer<T>>(2, 2));
         // Conv3: 16x5x5 -> 120x1x1
-        this->layers_.push_back(std::make_unique<ConvLayer<T>>(16, 120, std::vector<size_t>{5, 5}, 1, 0));
+        this->layers_.push_back(std::make_unique<ConvLayer<T>>(16, 120, std::vector<int>{5, 5}, 1, 0));
         // Tanh activation after Conv3
         this->layers_.push_back(std::make_unique<TanhLayer<T>>());
         // Flatten: convert 3D tensor to 1D vector
@@ -66,4 +66,4 @@ public:
     }
 };
 
-} // namespace lenet5 
+} // namespace dnn 

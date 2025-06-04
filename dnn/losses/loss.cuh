@@ -2,7 +2,7 @@
 
 #include "dnn/core/tensor.cuh"
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 class Loss {
@@ -16,4 +16,4 @@ public:
     virtual tensor<T> compute_gradient(const tensor<T>& predictions, const tensor<T>& targets) = 0;
 };
 
-} // namespace lenet5 
+} // namespace dnn 

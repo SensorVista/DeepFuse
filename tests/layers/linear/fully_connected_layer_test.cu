@@ -4,7 +4,7 @@
 #include <cmath>
 #include <random>
 
-namespace lenet5 {
+namespace dnn {
 namespace test {
 
 class FullyConnectedLayerTest : public ::testing::Test {
@@ -22,14 +22,14 @@ protected:
         const std::vector<float>& input,
         const std::vector<float>& weights,
         const std::vector<float>& bias,
-        size_t in_features,
-        size_t out_features) {
+        int in_features,
+        int out_features) {
         
-        std::vector<float> output(out_features);
+        std::vector<float> output(static_cast<size_t>(out_features));
         
-        for (size_t i = 0; i < out_features; ++i) {
+        for (int i = 0; i < out_features; ++i) {
             output[i] = bias[i];
-            for (size_t j = 0; j < in_features; ++j) {
+            for (int j = 0; j < in_features; ++j) {
                 output[i] += input[j] * weights[i * in_features + j];
             }
         }
@@ -42,30 +42,30 @@ protected:
         const std::vector<float>& grad_output,
         const std::vector<float>& input,
         const std::vector<float>& weights,
-        size_t in_features,
-        size_t out_features) {
+        int in_features,
+        int out_features) {
         
-        std::vector<float> grad_input(in_features);
+        std::vector<float> grad_input(static_cast<size_t>(in_features));
         std::vector<float> grad_weights(weights.size());
-        std::vector<float> grad_bias(out_features);
+        std::vector<float> grad_bias(static_cast<size_t>(out_features));
         
         // Compute input gradients
-        for (size_t i = 0; i < in_features; ++i) {
+        for (int i = 0; i < in_features; ++i) {
             grad_input[i] = 0.0f;
-            for (size_t j = 0; j < out_features; ++j) {
+            for (int j = 0; j < out_features; ++j) {
                 grad_input[i] += grad_output[j] * weights[j * in_features + i];
             }
         }
         
         // Compute weight gradients
-        for (size_t i = 0; i < out_features; ++i) {
-            for (size_t j = 0; j < in_features; ++j) {
+        for (int i = 0; i < out_features; ++i) {
+            for (int j = 0; j < in_features; ++j) {
                 grad_weights[i * in_features + j] = grad_output[i] * input[j];
             }
         }
         
         // Compute bias gradients
-        for (size_t i = 0; i < out_features; ++i) {
+        for (int i = 0; i < out_features; ++i) {
             grad_bias[i] = grad_output[i];
         }
         
@@ -74,8 +74,8 @@ protected:
 };
 
 TEST_F(FullyConnectedLayerTest, ConstructorAndInitialization) {
-    size_t in_features = 4;
-    size_t out_features = 3;
+    int in_features = 4;
+    int out_features = 3;
     
     FullyConnectedLayer<float> layer(in_features, out_features);
     
@@ -92,18 +92,18 @@ TEST_F(FullyConnectedLayerTest, ConstructorAndInitialization) {
 }
 
 TEST_F(FullyConnectedLayerTest, ForwardPass) {
-    size_t in_features = 4;
-    size_t out_features = 3;
+    int in_features = 4;
+    int out_features = 3;
     
     FullyConnectedLayer<float> layer(in_features, out_features);
     
     // Create input tensor
-    std::vector<size_t> input_shape = {1, in_features};
+    std::vector<int> input_shape = {1, in_features};
     tensor<float> input(input_shape);
     
     // Fill input with test data
-    std::vector<float> input_data(in_features);
-    for (size_t i = 0; i < in_features; ++i) {
+    std::vector<float> input_data(static_cast<size_t>(in_features));
+    for (int i = 0; i < in_features; ++i) {
         input_data[i] = static_cast<float>(i) / in_features;
     }
     input.upload(input_data.data());
@@ -119,31 +119,31 @@ TEST_F(FullyConnectedLayerTest, ForwardPass) {
     tensor<float> output = layer.forward(input);
     
     // Download and verify results
-    std::vector<float> output_data(out_features);
+    std::vector<float> output_data(static_cast<size_t>(out_features));
     output.download(output_data.data());
     
     // Compute expected output
     std::vector<float> expected_output = compute_expected_output(
         input_data, weights_data, bias_data, in_features, out_features);
     
-    for (size_t i = 0; i < out_features; ++i) {
+    for (int i = 0; i < out_features; ++i) {
         EXPECT_NEAR(output_data[i], expected_output[i], 1e-5);
     }
 }
 
 TEST_F(FullyConnectedLayerTest, BackwardPass) {
-    size_t in_features = 4;
-    size_t out_features = 3;
+    int in_features = 4;
+    int out_features = 3;
     
     FullyConnectedLayer<float> layer(in_features, out_features);
     
     // Create input tensor
-    std::vector<size_t> input_shape = {1, in_features};
+    std::vector<int> input_shape = {1, in_features};
     tensor<float> input(input_shape);
     
     // Fill input with test data
-    std::vector<float> input_data(in_features);
-    for (size_t i = 0; i < in_features; ++i) {
+    std::vector<float> input_data(static_cast<size_t>(in_features));
+    for (int i = 0; i < in_features; ++i) {
         input_data[i] = static_cast<float>(i) / in_features;
     }
     input.upload(input_data.data());
@@ -153,8 +153,8 @@ TEST_F(FullyConnectedLayerTest, BackwardPass) {
     
     // Create gradient tensor
     tensor<float> grad_output(output.shape());
-    std::vector<float> grad_data(out_features);
-    for (size_t i = 0; i < out_features; ++i) {
+    std::vector<float> grad_data(static_cast<size_t>(out_features));
+    for (int i = 0; i < out_features; ++i) {
         grad_data[i] = static_cast<float>(i) / out_features;
     }
     grad_output.upload(grad_data.data());
@@ -168,14 +168,14 @@ TEST_F(FullyConnectedLayerTest, BackwardPass) {
     tensor<float> grad_input = layer.backward(grad_output, input);
     
     // Download and verify results
-    std::vector<float> grad_input_data(in_features);
+    std::vector<float> grad_input_data(static_cast<size_t>(in_features));
     grad_input.download(grad_input_data.data());
     
     // Compute expected gradients
     std::vector<float> expected_gradients = compute_expected_gradients(
         grad_data, input_data, weights_data, in_features, out_features);
     
-    for (size_t i = 0; i < in_features; ++i) {
+    for (int i = 0; i < in_features; ++i) {
         EXPECT_NEAR(grad_input_data[i], expected_gradients[i], 1e-5);
     }
     
@@ -192,18 +192,18 @@ TEST_F(FullyConnectedLayerTest, BackwardPass) {
 }
 
 TEST_F(FullyConnectedLayerTest, DifferentDimensions) {
-    size_t in_features = 5;
-    size_t out_features = 2;
+    int in_features = 5;
+    int out_features = 2;
     
     FullyConnectedLayer<float> layer(in_features, out_features);
     
     // Create input tensor
-    std::vector<size_t> input_shape = {1, in_features};
+    std::vector<int> input_shape = {1, in_features};
     tensor<float> input(input_shape);
     
     // Fill input with test data
-    std::vector<float> input_data(in_features);
-    for (size_t i = 0; i < in_features; ++i) {
+    std::vector<float> input_data(static_cast<size_t>(in_features));
+    for (int i = 0; i < in_features; ++i) {
         input_data[i] = static_cast<float>(i) / in_features;
     }
     input.upload(input_data.data());
@@ -217,8 +217,8 @@ TEST_F(FullyConnectedLayerTest, DifferentDimensions) {
     
     // Create gradient tensor
     tensor<float> grad_output(output.shape());
-    std::vector<float> grad_data(out_features);
-    for (size_t i = 0; i < out_features; ++i) {
+    std::vector<float> grad_data(static_cast<size_t>(out_features));
+    for (int i = 0; i < out_features; ++i) {
         grad_data[i] = static_cast<float>(i) / out_features;
     }
     grad_output.upload(grad_data.data());
@@ -227,8 +227,9 @@ TEST_F(FullyConnectedLayerTest, DifferentDimensions) {
     tensor<float> grad_input = layer.backward(grad_output, input);
     
     // Verify gradient shapes
-    EXPECT_EQ(grad_input.shape(), input_shape);
+    EXPECT_EQ(grad_input.shape()[0], 1);
+    EXPECT_EQ(grad_input.shape()[1], in_features);
 }
 
 } // namespace test
-} // namespace lenet5 
+} // namespace dnn 

@@ -5,7 +5,7 @@
 #include <numeric>
 #include <random>
 
-namespace lenet5 {
+namespace dnn {
 namespace test {
 
 class CrossEntropyTest : public ::testing::Test {
@@ -67,7 +67,7 @@ TEST_F(CrossEntropyTest, ForwardPass) {
     CrossEntropyLoss<float> loss;
     
     // Create prediction and target tensors
-    std::vector<size_t> shape = {1, 4};
+    std::vector<int> shape = {1, 4};
     tensor<float> predictions(shape);
     tensor<float> targets(shape);
     
@@ -91,7 +91,7 @@ TEST_F(CrossEntropyTest, BackwardPass) {
     CrossEntropyLoss<float> loss;
     
     // Create prediction and target tensors
-    std::vector<size_t> shape = {1, 4};
+    std::vector<int> shape = {1, 4};
     tensor<float> predictions(shape);
     tensor<float> targets(shape);
     
@@ -121,7 +121,7 @@ TEST_F(CrossEntropyTest, EdgeCases) {
     CrossEntropyLoss<float> loss;
     
     // Create prediction and target tensors
-    std::vector<size_t> shape = {1, 4};
+    std::vector<int> shape = {1, 4};
     tensor<float> predictions(shape);
     tensor<float> targets(shape);
     
@@ -157,7 +157,7 @@ TEST_F(CrossEntropyTest, MultipleClasses) {
     CrossEntropyLoss<float> loss;
     
     // Create prediction and target tensors
-    std::vector<size_t> shape = {1, 10}; // 10 classes
+    std::vector<int> shape = {1, 10}; // 10 classes
     tensor<float> predictions(shape);
     tensor<float> targets(shape);
     
@@ -203,4 +203,4 @@ TEST_F(CrossEntropyTest, MultipleClasses) {
 }
 
 } // namespace test
-} // namespace lenet5 
+} // namespace dnn 

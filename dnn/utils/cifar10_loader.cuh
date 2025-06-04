@@ -12,7 +12,7 @@
 
 #include "../core/tensor.cuh" // For tensor<T>
 
-namespace lenet5 {
+namespace dnn {
 
 class CIFAR10Loader {
 public:
@@ -63,33 +63,33 @@ public:
                 throw std::runtime_error("File size is not a multiple of " + std::to_string(IMAGE_SIZE_BYTES) + " bytes for file: " + filepath.string());
             }
 
-            int num_records = file_size / IMAGE_SIZE_BYTES;
+            size_t num_records = file_size / IMAGE_SIZE_BYTES;
 
-            for (int i = 0; i < num_records; ++i) {
+            for (size_t i = 0; i < num_records; ++i) {
                 uint8_t label_byte;
                 file.read(reinterpret_cast<char*>(&label_byte), 1);
                 labels.push_back(label_byte);
 
-                std::vector<uint8_t> image_data_raw(IMAGE_SIZE_BYTES - 1);
-                file.read(reinterpret_cast<char*>(image_data_raw.data()), IMAGE_SIZE_BYTES - 1);
+                std::vector<uint8_t> image_data_raw(static_cast<size_t>(IMAGE_SIZE_BYTES - 1));
+                file.read(reinterpret_cast<char*>(image_data_raw.data()), static_cast<std::streamsize>(IMAGE_SIZE_BYTES - 1));
 
                 // Create a host-side buffer for the processed image data
-                std::vector<float> host_image_data(IMAGE_CHANNELS * IMAGE_HEIGHT * IMAGE_WIDTH);
+                std::vector<float> host_image_data(static_cast<size_t>(IMAGE_CHANNELS * IMAGE_HEIGHT * IMAGE_WIDTH));
 
                 // Convert to float and normalize per-channel, storing in host_image_data
                 for (int c = 0; c < IMAGE_CHANNELS; ++c) {
                     for (int h = 0; h < IMAGE_HEIGHT; ++h) {
                         for (int w = 0; w < IMAGE_WIDTH; ++w) {
                             // Calculate linear index for the output buffer [C, H, W]
-                            size_t output_linear_index = c * IMAGE_PIXELS + h * IMAGE_WIDTH + w;
+                            size_t output_linear_index = static_cast<size_t>(c * IMAGE_PIXELS + h * IMAGE_WIDTH + w);
 
                             // Data is stored RRR...GGG...BBB...
                             // So, the raw_index needs to be adjusted based on the channel
-                            int pixel_index_in_channel = h * IMAGE_WIDTH + w;
-                            int original_raw_index = 0;
+                            size_t pixel_index_in_channel = static_cast<size_t>(h * IMAGE_WIDTH + w);
+                            size_t original_raw_index = 0;
                             if (c == 0) original_raw_index = pixel_index_in_channel; // Red channel
-                            else if (c == 1) original_raw_index = IMAGE_PIXELS + pixel_index_in_channel; // Green channel
-                            else if (c == 2) original_raw_index = 2 * IMAGE_PIXELS + pixel_index_in_channel; // Blue channel
+                            else if (c == 1) original_raw_index = static_cast<size_t>(IMAGE_PIXELS) + pixel_index_in_channel; // Green channel
+                            else if (c == 2) original_raw_index = static_cast<size_t>(2 * IMAGE_PIXELS) + pixel_index_in_channel; // Blue channel
 
                             float pixel_value = static_cast<float>(image_data_raw[original_raw_index]) / 255.0f;
                             pixel_value = (pixel_value - mean[c]) / std[c];
@@ -103,4 +103,4 @@ public:
     }
 };
 
-} // namespace lenet5 
+} // namespace dnn 

@@ -3,7 +3,7 @@
 #include "dnn/core/layer.cuh"
 #include "dnn/core/tensor.cuh"
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 class FlattenLayer : public Layer<T> {
@@ -15,4 +15,4 @@ public:
 
 };
 
-} // namespace lenet5 
+} // namespace dnn 

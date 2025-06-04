@@ -7,7 +7,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace lenet5 {
+namespace dnn {
 
 // Utility for __half support (host <-> device)
 __device__ __forceinline__ float to_float(float v) { return v; }
@@ -112,7 +112,7 @@ __global__ void fc_backward_bias(
 
 template<typename T>
 tensor<T> FullyConnectedLayer<T>::forward(const tensor<T>& input) {
-    size_t N = input.shape()[0];
+    int N = input.shape()[0];
     tensor<T> output({ N, out_features_ });
     dim3 blockDim(256);
     dim3 gridDim((out_features_ + blockDim.x - 1) / blockDim.x, N);
@@ -132,7 +132,7 @@ tensor<T> FullyConnectedLayer<T>::forward(const tensor<T>& input) {
 
 template<typename T>
 tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& input) {
-    const size_t N = input.shape()[0];
+    const int N = input.shape()[0];
 
     // [1] Allocate gradient of input for chain rule
     tensor<T> grad_input({N, in_features_});
@@ -146,8 +146,8 @@ tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const t
             weights_.data(),
             grad_input.data(),
             N,
-            static_cast<int>(in_features_),
-            static_cast<int>(out_features_)
+            in_features_,
+            out_features_
         );
     }
 
@@ -163,8 +163,8 @@ tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const t
             input.data(),
             grad_weights_.data(),  // directly write into persistent buffer
             N,
-            static_cast<int>(in_features_),
-            static_cast<int>(out_features_)
+            in_features_,
+            out_features_
         );
     }
 
@@ -176,7 +176,7 @@ tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const t
             grad_output.data(),
             grad_bias_.data(),  // directly write into persistent buffer
             N,
-            static_cast<int>(out_features_)
+            out_features_
         );
     }
 
@@ -193,4 +193,4 @@ template class FullyConnectedLayer<float>;  // FP32
 // template class FullyConnectedLayer<__half>; // FP16
 // template class FullyConnectedLayer<__nv_bfloat16>; // BF16
 
-} // namespace lenet5 
+} // namespace dnn 

@@ -3,7 +3,7 @@
 
 #include <cuda_runtime.h>
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 __global__ void cross_entropy_log_softmax_kernel(T* loss, const T* logits, const T* targets, int batch_size, int num_classes) {
@@ -65,8 +65,8 @@ __global__ void cross_entropy_gradient_logit_kernel(T* grad, const T* logits, co
 
 template<typename T>
 T CrossEntropyLoss<T>::compute(const tensor<T>& logits, const tensor<T>& targets) {
-    size_t batch_size = logits.shape()[0];
-    size_t num_classes = logits.shape()[1];
+    int batch_size = logits.shape()[0];
+    int num_classes = logits.shape()[1];
 
     tensor<T> losses({ batch_size });
 
@@ -118,4 +118,4 @@ template class CrossEntropyLoss<float>;  // FP32
 // template class CrossEntropyLoss<__half>; // FP16
 // template class CrossEntropyLoss<__nv_bfloat16>; // BF16
 
-} // namespace lenet5 
+} // namespace dnn 

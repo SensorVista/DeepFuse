@@ -184,22 +184,22 @@ __global__ void conv_bias_grad_2d(
     grad_bias[c] = static_cast<T>(sum);
 }
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 tensor<T> ConvLayer<T>::forward(const tensor<T>& input) {
     // Input dimensions (assumes NCHW: [batch, channels, height, width])
-    size_t batch_size   = input.shape()[0];
-    size_t input_height = input.shape()[2];
-    size_t input_width  = input.shape()[3];
+    int batch_size   = input.shape()[0];
+    int input_height = input.shape()[2];
+    int input_width  = input.shape()[3];
 
     // Kernel size
-    size_t kH = kernel_size_[0];
-    size_t kW = kernel_size_[1];
+    int kH = kernel_size_[0];
+    int kW = kernel_size_[1];
 
     // Calculate output dimensions with padding
-    size_t output_height = (input_height + 2 * padding_ - kH) / stride_ + 1;
-    size_t output_width  = (input_width  + 2 * padding_ - kW) / stride_ + 1;
+    int output_height = (input_height + 2 * padding_ - kH) / stride_ + 1;
+    int output_width  = (input_width  + 2 * padding_ - kW) / stride_ + 1;
 
     // Validate input dimensions
     if (input_height < kH || input_width < kW) {
@@ -222,7 +222,7 @@ tensor<T> ConvLayer<T>::forward(const tensor<T>& input) {
         throw std::runtime_error(ss.str());
     }
 
-    std::vector<size_t> output_shape = {
+    std::vector<int> output_shape = {
         batch_size,
         out_channels_,
         output_height,
@@ -241,16 +241,16 @@ tensor<T> ConvLayer<T>::forward(const tensor<T>& input) {
         weights_.data(),
         bias_.data(),
         use_sparse_connectivity_ ? connection_mask_dev_.data() : nullptr,
-        static_cast<int>(batch_size),
-        static_cast<int>(in_channels_),
-        static_cast<int>(out_channels_),
-        static_cast<int>(input_height),   // input height
-        static_cast<int>(input_width),    // input width
-        static_cast<int>(output_height),  // output height
-        static_cast<int>(output_width),   // output width
-        static_cast<int>(kH),             // kernel size
-        static_cast<int>(stride_),
-        static_cast<int>(padding_)
+        batch_size,
+        in_channels_,
+        out_channels_,
+        input_height,   // input height
+        input_width,    // input width
+        output_height,  // output height
+        output_width,   // output width
+        kH,             // kernel size
+        stride_,
+        padding_
     );
 
     utils::THROW_CUDA_EX(); 
@@ -260,14 +260,14 @@ tensor<T> ConvLayer<T>::forward(const tensor<T>& input) {
 
 template<typename T>
 tensor<T> ConvLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& input) {
-    const size_t N = input.shape()[0];
-    const size_t C_in = input.shape()[1];
-    const size_t H_in = input.shape()[2];
-    const size_t W_in = input.shape()[3];
-    const size_t C_out = grad_output.shape()[1];
-    const size_t H_out = grad_output.shape()[2];
-    const size_t W_out = grad_output.shape()[3];
-    const size_t K = kernel_size_[0];
+    const int N = input.shape()[0];
+    const int C_in = input.shape()[1];
+    const int H_in = input.shape()[2];
+    const int W_in = input.shape()[3];
+    const int C_out = grad_output.shape()[1];
+    const int H_out = grad_output.shape()[2];
+    const int W_out = grad_output.shape()[3];
+    const int K = kernel_size_[0];
 
     tensor<T> grad_input(input.shape());
     grad_input.zero(); // Initialize to zero
@@ -315,4 +315,4 @@ template class ConvLayer<float>;  // FP32
 // template class ConvLayer<__half>; // FP16
 // template class ConvLayer<__nv_bfloat16>; // BF16
 
-} // namespace lenet5 
+} // namespace dnn 

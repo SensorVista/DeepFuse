@@ -3,7 +3,7 @@
 #include <vector>
 #include <random>
 
-namespace lenet5 {
+namespace dnn {
 namespace test {
 
 class TensorTest : public ::testing::Test {
@@ -18,7 +18,7 @@ protected:
 };
 
 TEST_F(TensorTest, ConstructorAndShape) {
-    std::vector<size_t> shape = {2, 3, 4};
+    std::vector<int> shape = {2, 3, 4};
     tensor<float> t(shape);
     
     EXPECT_EQ(t.shape(), shape);
@@ -29,7 +29,7 @@ TEST_F(TensorTest, ConstructorAndShape) {
 }
 
 TEST_F(TensorTest, UploadDownload) {
-    std::vector<size_t> shape = {2, 2};
+    std::vector<int> shape = {2, 2};
     tensor<float> t(shape);
     
     std::vector<float> host_data = {1.0f, 2.0f, 3.0f, 4.0f};
@@ -44,7 +44,7 @@ TEST_F(TensorTest, UploadDownload) {
 }
 
 TEST_F(TensorTest, FillAndZero) {
-    std::vector<size_t> shape = {2, 2};
+    std::vector<int> shape = {2, 2};
     tensor<float> t(shape);
     
     t.fill(1.0f);
@@ -64,10 +64,10 @@ TEST_F(TensorTest, FillAndZero) {
 }
 
 TEST_F(TensorTest, Reshape) {
-    std::vector<size_t> initial_shape = {2, 2};
+    std::vector<int> initial_shape = {2, 2};
     tensor<float> t(initial_shape);
       
-    std::vector<size_t> new_shape = {4, 1};
+    std::vector<int> new_shape = {4, 1};
     t.reshape(new_shape);
     
     EXPECT_EQ(t.shape(), new_shape);
@@ -75,7 +75,7 @@ TEST_F(TensorTest, Reshape) {
 }
 
 TEST_F(TensorTest, MoveSemantics) {
-    std::vector<size_t> shape = {2, 2};
+    std::vector<int> shape = {2, 2};
     tensor<float> t1(shape);
     std::vector<float> host_data = {1.0f, 2.0f, 3.0f, 4.0f};
     t1.upload(host_data.data());
@@ -100,4 +100,4 @@ TEST_F(TensorTest, MoveSemantics) {
 }
 
 } // namespace test
-} // namespace lenet5 
+} // namespace dnn 

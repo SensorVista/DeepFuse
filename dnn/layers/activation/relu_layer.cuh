@@ -3,7 +3,7 @@
 #include "dnn/core/layer.cuh"
 #include "dnn/core/tensor.cuh"
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 class ReLULayer : public Layer<T> {
@@ -17,4 +17,4 @@ public:
     tensor<T> backward(const tensor<T>& grad_output, const tensor<T>& input) override;
 };
 
-} // namespace lenet5 
+} // namespace dnn 

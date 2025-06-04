@@ -11,11 +11,11 @@
 void print_usage(const char* program_name) {
     // Extract just the filename without path and extension
     std::string name = program_name;
-    size_t last_slash = name.find_last_of("/\\");
+    int last_slash = name.find_last_of("/\\");
     if (last_slash != std::string::npos) {
         name = name.substr(last_slash + 1);
     }
-    size_t last_dot = name.find_last_of('.');
+    int last_dot = name.find_last_of('.');
     if (last_dot != std::string::npos) {
         name = name.substr(0, last_dot);
     }
@@ -43,10 +43,10 @@ void print_usage(const char* program_name) {
 }
 
 void train(
-    lenet5::TrainingModel<float>* network, 
-    size_t num_epochs, size_t batch_size, size_t channels, size_t input_dim, size_t output_dim,
-    size_t num_train_images, std::vector<std::vector<float>> train_images, std::vector<uint8_t> train_labels,
-    size_t num_test_images, std::vector<std::vector<float>> test_images, std::vector<uint8_t> test_labels) {   
+    dnn::TrainingModel<float>* network, 
+    int num_epochs, int batch_size, int channels, int input_dim, int output_dim,
+    int num_train_images, std::vector<std::vector<float>> train_images, std::vector<uint8_t> train_labels,
+    int num_test_images, std::vector<std::vector<float>> test_images, std::vector<uint8_t> test_labels) {   
     
     // Radomize samples
     std::srand(static_cast<unsigned>(std::time(nullptr)));
@@ -54,7 +54,7 @@ void train(
     std::vector<int> indices(num_train_images);
     std::iota(indices.begin(), indices.end(), 0);
 
-    for (size_t epoch = 0; epoch < num_epochs; ++epoch) {
+    for (int epoch = 0; epoch < num_epochs; ++epoch) {
         float total_loss = 0;
 
         // // Learning rate schedule
@@ -67,11 +67,11 @@ void train(
         std::shuffle(indices.begin(), indices.end(), rng);
 
         // Training
-        for (size_t i = 0; i < num_train_images; i += batch_size) {
-            size_t current_batch_size = std::min(batch_size, num_train_images - i);
+        for (int i = 0; i < num_train_images; i += batch_size) {
+            int current_batch_size = std::min(batch_size, num_train_images - i);
 
-            lenet5::tensor<float> input({ current_batch_size, channels, input_dim, input_dim });
-            lenet5::tensor<float> target({ current_batch_size, output_dim });
+            dnn::tensor<float> input({ current_batch_size, channels, input_dim, input_dim });
+            dnn::tensor<float> target({ current_batch_size, output_dim });
 
             // Convert batch data to float
             std::vector<float> input_data(current_batch_size * input_dim * input_dim);
@@ -82,7 +82,7 @@ void train(
                     input_data[b * input_dim * input_dim + j] = (train_images[indices[i + b]][j] - 127.5f) / 127.5f;
                 }
                 
-                size_t label = static_cast<size_t>(train_labels[indices[i + b]]);
+                int label = train_labels[indices[i + b]];
                 if (label >= output_dim)
                     throw std::out_of_range("Label index exceeds output_dim");
                 target_data[b * output_dim + label] = 1.0f;
@@ -102,7 +102,7 @@ void train(
         // Validation
         int correct_predictions = 0;
         for (int i = 0; i < num_test_images; ++i) {
-            lenet5::tensor<float> input({ 1, 1, input_dim, input_dim });
+            dnn::tensor<float> input({ 1, 1, input_dim, input_dim });
             // Normalize test images similarly
             std::vector<float> single_test_image_data(input_dim * input_dim);
             for(int j = 0; j < input_dim * input_dim; ++j) {
@@ -124,13 +124,19 @@ void train(
         float accuracy = static_cast<float>(correct_predictions) / num_test_images;
         std::cout
             << "Epoch " << (epoch + 1) << "/" << num_epochs << ": "
-            << "Accuracy = " << (accuracy * 100.0f) << "%, "
+            << "Accuracy = " << (accuracy * 100.0f) << "%" << ", "
             << "Loss = " << (total_loss / static_cast<float>(num_train_images))
             << std::endl;
     }
 }
 
 int main(int argc, char* argv[]) {
+    int result = 0;
+
+    // Initialize cuDNN
+    cudnnHandle_t handle;
+    cudnnCreate(&handle);
+
     try {
         if (argc != 2) {
             print_usage(argv[0]);
@@ -165,25 +171,25 @@ int main(int argc, char* argv[]) {
         int image_size = image_dim * image_dim * channels;
 
         std::cout << "Loading training images from: " << train_images_path << std::endl;
-        auto train_images = lenet5::MNISTLoader::load_images(train_images_path, num_train_images, image_size);
+        auto train_images = dnn::MNISTLoader::load_images(train_images_path, num_train_images, image_size);
         std::cout << "Loaded " << train_images.size() << " training images." << std::endl;
 
         std::cout << "Loading training labels from: " << train_labels_path << std::endl;
-        auto train_labels = lenet5::MNISTLoader::load_labels(train_labels_path, num_train_images);
+        auto train_labels = dnn::MNISTLoader::load_labels(train_labels_path, num_train_images);
         std::cout << "Loaded " << train_labels.size() << " training labels." << std::endl;
 
         std::cout << "Loading test images from: " << test_images_path << std::endl;
-        auto test_images = lenet5::MNISTLoader::load_images(test_images_path, num_test_images, image_size);
+        auto test_images = dnn::MNISTLoader::load_images(test_images_path, num_test_images, image_size);
         std::cout << "Loaded " << test_images.size() << " test images." << std::endl;
 
         std::cout << "Loading test labels from: " << test_labels_path << std::endl;
-        auto test_labels = lenet5::MNISTLoader::load_labels(test_labels_path, num_test_images);
+        auto test_labels = dnn::MNISTLoader::load_labels(test_labels_path, num_test_images);
         std::cout << "Loaded " << test_labels.size() << " test labels." << std::endl;
 
         // Create LeNet-5 network with float precision
-        lenet5::LeNet5<float> network;
-        network.set_loss(std::make_unique<lenet5::CrossEntropyLoss<float>>());
-        network.set_optimizer(std::make_unique<lenet5::SGDOptimizer<float>>(0.01f, 0.9f, 0.0f));
+        dnn::LeNet5<float> network;
+        network.set_loss(std::make_unique<dnn::CrossEntropyLoss<float>>());
+        network.set_optimizer(std::make_unique<dnn::SGDOptimizer<float>>(0.01f, 0.9f, 0.0f));
 
         // Begin training
         const int num_epochs = 10;
@@ -192,7 +198,7 @@ int main(int argc, char* argv[]) {
         auto pad_images_to_32x32 = [](const std::vector<std::vector<float>>& images28, int pad_y, int pad_x) {
             const int new_dim = 28 + 2 * pad_y;
             std::vector<std::vector<float>> padded(images28.size(), std::vector<float>(new_dim * new_dim, 0.0f));
-            for (size_t i = 0; i < images28.size(); ++i) {
+            for (int i = 0; i < images28.size(); ++i) {
                 for (int y = 0; y < 28; ++y) {
                     for (int x = 0; x < 28; ++x) {
                         padded[i][(y + pad_y) * new_dim + (x + pad_x)] = images28[i][y * 28 + x];
@@ -210,7 +216,11 @@ int main(int argc, char* argv[]) {
         train(&network, num_epochs, batch_size, channels, image_dim, 10, num_train_images, train_images, train_labels, num_test_images, test_images, test_labels);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
-        return 1;
+        result = 1;
     }
-    return 0;
+
+    // Clean up
+    cudnnDestroy(handle);
+
+    return result;
 } 

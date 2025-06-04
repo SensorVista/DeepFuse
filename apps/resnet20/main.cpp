@@ -69,11 +69,11 @@ int main(int argc, char* argv[]) {
         std::vector<uint8_t> test_labels;
 
         std::cout << "Loading training data from: " << cifar10_train_path << std::endl;
-        lenet5::CIFAR10Loader::load(true, train_images, train_labels, cifar10_train_path);
+        dnn::CIFAR10Loader::load(true, train_images, train_labels, cifar10_train_path);
         std::cout << "Loaded " << train_images.size() << " training images and " << train_labels.size() << " training labels." << std::endl;
 
         std::cout << "Loading test data from: " << cifar10_test_path << std::endl;
-        lenet5::CIFAR10Loader::load(false, test_images, test_labels, cifar10_test_path);
+        dnn::CIFAR10Loader::load(false, test_images, test_labels, cifar10_test_path);
         std::cout << "Loaded " << test_images.size() << " test images and " << test_labels.size() << " test labels." << std::endl;
 
     } catch (const std::exception& e) {

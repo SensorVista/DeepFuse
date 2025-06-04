@@ -3,22 +3,24 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 #include <cuda_bf16.h>
+#include <cudnn.h>
 
 #include <vector>
 #include <string>
 
-namespace lenet5 {
+namespace dnn {
 
 // Define the tensor struct
 template<typename T>
 struct tensor {
 protected:
-    std::vector<size_t> shape_;
-    T* device_ptr_;
-    size_t total_size_;
+    std::vector<int> shape_;
+    T* data_;
+    int total_size_;
+    cudnnTensorDescriptor_t desc_;
 
 public:
-    tensor(const std::vector<size_t>& shape);
+    tensor(const std::vector<int>& shape);
     virtual ~tensor();
 
     // Upload data from host to device
@@ -32,16 +34,16 @@ public:
     const T* data() const;
 
     // Get shape
-    const std::vector<size_t>& shape() const;
+    const std::vector<int>& shape() const;
 
     // Get total size
-    size_t size() const;
+    int size() const;
 
     // Get size of a specific dimension
-    size_t size(size_t dim) const;
+    int size(int dim) const;
 
     // Resize and allocate new memory
-    void reshape(const std::vector<size_t>& new_shape);
+    void reshape(const std::vector<int>& new_shape);
 
     // Fill tensor with a value
     void fill(T value);
@@ -59,11 +61,14 @@ public:
     // Implement move assignment operator
     tensor& operator=(tensor&& other) noexcept;
 
-    // Copy tensor data
+    // Copy tensor data from another tensor
     void copy_from(const tensor<T>& src);
 
     // Output tensor to string
     std::string to_string() const;
+
+    // cuDNN descriptor
+    cudnnTensorDescriptor_t descriptor() const { return desc_; }
 };
 
 // Forward declarations for supported template types
@@ -71,13 +76,13 @@ template class tensor<float>;  // FP32
 template class tensor<__half>; // FP16
 template class tensor<__nv_bfloat16>; // BF16
 template class tensor<int8_t>;
-template class tensor<unsigned char>; // Explicitly instantiate for unsigned char
-template class tensor<bool>;
+template class tensor<uint8_t>;
 
 // Concrete aliases for commonly used tensor types
-using tensorf   = tensor<float>;    // 32-bit float tensor
-using tensorh   = tensor<__half>;   // 16-bit half tensor
-using tensorbf  = tensor<__nv_bfloat16>;   // 16-bit half tensor
-using tensori8  = tensor<int8_t>;   // 8-bit integer tensor (for quantized models)
+using tensorf   = tensor<float>;
+using tensorh   = tensor<__half>;
+using tensorbf  = tensor<__nv_bfloat16>;
+using tensori8  = tensor<int8_t>;
+using tensoru8  = tensor<uint8_t>;
 
-} // namespace lenet5 
+} // namespace dnn 

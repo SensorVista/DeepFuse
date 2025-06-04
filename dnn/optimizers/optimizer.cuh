@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 class Optimizer {
@@ -35,4 +35,4 @@ protected:
     std::vector<tensor<T>*> gradients_;        // gradients for those parameters
 };
 
-} // namespace lenet5 
+} // namespace dnn 

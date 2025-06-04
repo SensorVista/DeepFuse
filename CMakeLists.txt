@@ -17,11 +17,17 @@ set(CMAKE_CUDA_STANDARD 17)
 # Find CUDA
 find_package(CUDAToolkit REQUIRED)
 
-# # Add include directories
-# include_directories(
-#     ${CMAKE_CURRENT_SOURCE_DIR}
-#     ${CUDAToolkit_INCLUDE_DIRS}
-# )
+add_library(cublas STATIC IMPORTED GLOBAL)
+set_target_properties(cublas PROPERTIES
+    IMPORTED_LOCATION "${CUDAToolkit_LIBRARY_DIR}/cublas.lib"
+    INTERFACE_INCLUDE_DIRECTORIES "${CUDAToolkit_INCLUDE_DIR}"
+)
+
+add_library(cudnn STATIC IMPORTED GLOBAL)
+set_target_properties(cudnn PROPERTIES
+    IMPORTED_LOCATION "${CUDAToolkit_LIBRARY_DIR}/cudnn.lib"
+    INTERFACE_INCLUDE_DIRECTORIES "${CUDAToolkit_INCLUDE_DIR}"
+)
 
 # Enable testing
 enable_testing()

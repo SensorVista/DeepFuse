@@ -2,7 +2,7 @@
 
 #include "dnn/losses/loss.cuh"
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 class BinaryCrossEntropyLoss : public Loss<T> {
@@ -13,4 +13,4 @@ public:
     tensor<T> compute_gradient(const tensor<T>& predictions, const tensor<T>& targets) override;
 };
 
-} // namespace lenet5 
+} // namespace dnn 

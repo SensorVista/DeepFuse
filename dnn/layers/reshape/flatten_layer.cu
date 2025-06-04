@@ -5,10 +5,10 @@
 
 #include <stdexcept>
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
-__global__ void flatten_forward_kernel(T* output, const T* input, size_t size) {
+__global__ void flatten_forward_kernel(T* output, const T* input, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         output[idx] = input[idx];
@@ -16,7 +16,7 @@ __global__ void flatten_forward_kernel(T* output, const T* input, size_t size) {
 }
 
 template<typename T>
-__global__ void flatten_backward_kernel(T* grad_input, const T* grad_output, size_t size) {
+__global__ void flatten_backward_kernel(T* grad_input, const T* grad_output, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         grad_input[idx] = grad_output[idx];
@@ -25,9 +25,9 @@ __global__ void flatten_backward_kernel(T* grad_input, const T* grad_output, siz
 
 template<typename T>
 tensor<T> FlattenLayer<T>::forward(const tensor<T>& input) {
-    size_t batch_size = input.shape()[0];
-    size_t flat_dim   = input.size() / batch_size;
-    tensor<T> output({batch_size, flat_dim});
+    int batch_size = input.shape()[0];
+    int flat_dim   = input.size() / batch_size;
+    tensor<T> output({batch_size, static_cast<int>(flat_dim)});
 
     int block_size = 256;
     int num_blocks = (input.size() + block_size - 1) / block_size;
@@ -42,7 +42,7 @@ tensor<T> FlattenLayer<T>::forward(const tensor<T>& input) {
 template<typename T>
 tensor<T> FlattenLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& input) {
     tensor<T> grad_input(input.shape());
-    size_t size = grad_output.size();
+    int size = grad_output.size();
     int block_size = 256;
     int num_blocks = (size + block_size - 1) / block_size;
 
@@ -58,4 +58,4 @@ template class FlattenLayer<float>;  // FP32
 // template class FlattenLayer<__half>; // FP16
 // template class FlattenLayer<__nv_bfloat16>; // BF16
 
-} // namespace lenet5 
+} // namespace dnn 

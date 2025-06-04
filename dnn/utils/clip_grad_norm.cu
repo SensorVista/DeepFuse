@@ -2,14 +2,14 @@
 
 #include <cuda_runtime.h>
 
-__global__ void clip_grad_norm_kernel(float* grad, float norm, float max_norm, size_t size) {
+__global__ void clip_grad_norm_kernel(float* grad, float norm, float max_norm, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         grad[idx] = grad[idx] * (max_norm / norm);
     }
 }
 
-namespace lenet5::utils {
+namespace dnn::utils {
     void clip_grad_norm(std::vector<tensor<float>*>& gradients, float max_norm) {
         float total_norm = 0.0f;
         for (auto* grad_tensor : gradients) {
@@ -26,7 +26,7 @@ namespace lenet5::utils {
 
         if (total_norm > max_norm) {
             for (auto* grad_tensor : gradients) {
-                size_t size = grad_tensor->size();
+                int size = grad_tensor->size();
                 int block_size = 256;
                 int num_blocks = (size + block_size - 1) / block_size;
                 clip_grad_norm_kernel<<<num_blocks, block_size>>>(

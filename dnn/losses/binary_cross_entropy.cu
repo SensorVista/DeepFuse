@@ -4,10 +4,10 @@
 
 #include "dnn/utils/common.cuh"
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
-__global__ void binary_cross_entropy_kernel(const T* predictions, const T* targets, T* loss, size_t size) {
+__global__ void binary_cross_entropy_kernel(const T* predictions, const T* targets, T* loss, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         // BCE = -(y * log(p) + (1-y) * log(1-p))
@@ -20,7 +20,7 @@ __global__ void binary_cross_entropy_kernel(const T* predictions, const T* targe
 }
 
 template<typename T>
-__global__ void binary_cross_entropy_gradient_kernel(const T* predictions, const T* targets, T* gradient, size_t size) {
+__global__ void binary_cross_entropy_gradient_kernel(const T* predictions, const T* targets, T* gradient, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         const T epsilon = T(1e-7);  // avoid div by 0
@@ -53,7 +53,7 @@ T BinaryCrossEntropyLoss<T>::compute(const tensor<T>& predictions, const tensor<
     std::vector<T> host_loss(loss.size());
     loss.download(host_loss.data());
     
-    for (size_t i = 0; i < loss.size(); ++i) {
+    for (int i = 0; i < loss.size(); ++i) {
         total_loss += host_loss[i];
     }
     
@@ -84,4 +84,4 @@ template class BinaryCrossEntropyLoss<float>;  // FP32
 // template class BinaryCrossEntropyLoss<__half>; // FP16
 // template class BinaryCrossEntropyLoss<__nv_bfloat16>; // BF16
 
-} // namespace lenet5
+} // namespace dnn

@@ -3,7 +3,7 @@
 #include <vector>
 #include <cmath>
 
-namespace lenet5 {
+namespace dnn {
 namespace test {
 
 class SigmoidLayerTest : public ::testing::Test {
@@ -32,7 +32,7 @@ TEST_F(SigmoidLayerTest, ForwardPass) {
     SigmoidLayer<float> layer;
     
     // Create input tensor
-    std::vector<size_t> shape = {2, 2};
+    std::vector<int> shape = {2, 2};
     tensor<float> input(shape);
     
     // Test data
@@ -56,7 +56,7 @@ TEST_F(SigmoidLayerTest, BackwardPass) {
     SigmoidLayer<float> layer;
     
     // Create input and gradient tensors
-    std::vector<size_t> shape = {2, 2};
+    std::vector<int> shape = {2, 2};
     tensor<float> input(shape);
     tensor<float> grad_output(shape);
     
@@ -84,7 +84,7 @@ TEST_F(SigmoidLayerTest, EdgeCases) {
     SigmoidLayer<float> layer;
     
     // Create input tensor
-    std::vector<size_t> shape = {1, 1};
+    std::vector<int> shape = {1, 1};
     tensor<float> input(shape);
     
     // Test very large and very small values
@@ -105,4 +105,4 @@ TEST_F(SigmoidLayerTest, EdgeCases) {
 }
 
 } // namespace test
-} // namespace lenet5 
+} // namespace dnn 

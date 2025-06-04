@@ -4,10 +4,10 @@
 #include <cuda_runtime.h>
 #include <iostream>
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
-__global__ void tanh_forward_kernel(T* output, const T* input, size_t size) {
+__global__ void tanh_forward_kernel(T* output, const T* input, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         output[idx] = static_cast<T>(1.7159f * tanh(2.0f/3.0f * input[idx]));
@@ -15,7 +15,7 @@ __global__ void tanh_forward_kernel(T* output, const T* input, size_t size) {
 }
 
 template<typename T>
-__global__ void tanh_backward_kernel(T* grad_input, const T* grad_output, const T* input, size_t size) {
+__global__ void tanh_backward_kernel(T* grad_input, const T* grad_output, const T* input, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         // The output of the forward pass is A * tanh(S * x)
@@ -30,7 +30,7 @@ __global__ void tanh_backward_kernel(T* grad_input, const T* grad_output, const 
 template<typename T>
 tensor<T> TanhLayer<T>::forward(const tensor<T>& input) {
     tensor<T> output(input.shape());
-    size_t size = input.size();
+    int size = input.size();
     if (size == 0) 
         return output;
 
@@ -47,7 +47,7 @@ tensor<T> TanhLayer<T>::forward(const tensor<T>& input) {
 template<typename T>
 tensor<T> TanhLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& input) {
     tensor<T> grad_input(grad_output.shape());
-    size_t size = grad_output.size();
+    int size = grad_output.size();
     int block_size = 256;
     int num_blocks = (size + block_size - 1) / block_size;
 
@@ -64,4 +64,4 @@ template class TanhLayer<float>;  // FP32
 // template class TanhLayer<__half>; // FP16
 // template class TanhLayer<__nv_bfloat16>; // BF16
 
-} // namespace lenet5 
+} // namespace dnn 

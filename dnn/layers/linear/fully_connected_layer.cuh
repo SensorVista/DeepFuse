@@ -10,7 +10,7 @@
 #include <vector>
 #include <random>
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 class FullyConnectedLayer : public Layer<T> {
@@ -19,11 +19,11 @@ private:
 	tensor<T> bias_;
 	tensor<T> grad_weights_;
 	tensor<T> grad_bias_;
-	size_t in_features_;
-	size_t out_features_;
+	int in_features_;
+	int out_features_;
 
 public:
-	FullyConnectedLayer(size_t in_features, size_t out_features)
+	FullyConnectedLayer(int in_features, int out_features)
 		: in_features_(in_features)
 		, out_features_(out_features)
 		, weights_({ out_features, in_features })
@@ -59,7 +59,7 @@ private:
 
 		std::vector<T> host_weights(weights_.size());
 		std::vector<T> host_bias(bias_.size());
-		for (size_t i = 0; i < host_weights.size(); ++i) {
+		for (int i = 0; i < host_weights.size(); ++i) {
 			host_weights[i] = dist(gen);
 		}
 		std::fill(host_bias.begin(), host_bias.end(), static_cast<T>(0.0f));
@@ -73,4 +73,4 @@ private:
  //using FullyConnectedLayerh   = FullyConnectedLayer<__half>;   // 16-bit half FullyConnectedLayer
  //using FullyConnectedLayeri8  = FullyConnectedLayer<int8_t>;   // 8-bit integer FullyConnectedLayer (for quantized models)
 
-} // namespace lenet5 
+} // namespace dnn 

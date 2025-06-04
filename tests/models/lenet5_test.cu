@@ -3,7 +3,7 @@
 #include <vector>
 #include <random>
 
-namespace lenet5 {
+namespace dnn {
 namespace test {
 
 class LeNet5Test : public ::testing::Test {
@@ -55,11 +55,11 @@ TEST_F(LeNet5Test, ForwardPass) {
     LeNet5<float> model;
     
     // Create input tensor (batch_size=1, channels=1, height=32, width=32)
-    std::vector<size_t> input_shape = {1, 1, 32, 32};
+    std::vector<int> input_shape = {1, 1, 32, 32};
     tensor<float> input(input_shape);
     
     // Fill input with random data
-    std::vector<float> input_data = generate_random_input(input_shape[0] * input_shape[1] * input_shape[2] * input_shape[3]);
+    std::vector<float> input_data = generate_random_input(static_cast<size_t>(input_shape[0] * input_shape[1] * input_shape[2] * input_shape[3]));
     input.upload(input_data.data());
     
     // Forward pass
@@ -84,19 +84,19 @@ TEST_F(LeNet5Test, TrainingStep) {
     LeNet5<float> model;
     
     // Create input tensor
-    std::vector<size_t> input_shape = {1, 1, 32, 32};
+    std::vector<int> input_shape = {1, 1, 32, 32};
     tensor<float> input(input_shape);
     
     // Create target tensor
-    std::vector<size_t> target_shape = {1, 10};
+    std::vector<int> target_shape = {1, 10};
     tensor<float> target(target_shape);
     
     // Fill input with random data
-    std::vector<float> input_data = generate_random_input(input_shape[0] * input_shape[1] * input_shape[2] * input_shape[3]);
+    std::vector<float> input_data = generate_random_input(static_cast<size_t>(input_shape[0] * input_shape[1] * input_shape[2] * input_shape[3]));
     input.upload(input_data.data());
     
     // Fill target with random one-hot encoded data
-    std::vector<float> target_data = generate_random_target(target_shape[1]);
+    std::vector<float> target_data = generate_random_target(static_cast<size_t>(target_shape[1]));
     target.upload(target_data.data());
     
     // Record initial loss
@@ -116,22 +116,22 @@ TEST_F(LeNet5Test, MultipleTrainingSteps) {
     LeNet5<float> model;
     
     // Create input tensor
-    std::vector<size_t> input_shape = {1, 1, 32, 32};
+    std::vector<int> input_shape = {1, 1, 32, 32};
     tensor<float> input(input_shape);
     
     // Create target tensor
-    std::vector<size_t> target_shape = {1, 10};
+    std::vector<int> target_shape = {1, 10};
     tensor<float> target(target_shape);
     
     // Perform multiple training steps
     std::vector<float> losses;
     for (int i = 0; i < 5; ++i) {
         // Fill input with random data
-        std::vector<float> input_data = generate_random_input(input_shape[0] * input_shape[1] * input_shape[2] * input_shape[3]);
+        std::vector<float> input_data = generate_random_input(static_cast<size_t>(input_shape[0] * input_shape[1] * input_shape[2] * input_shape[3]));
         input.upload(input_data.data());
         
         // Fill target with random one-hot encoded data
-        std::vector<float> target_data = generate_random_target(target_shape[1]);
+        std::vector<float> target_data = generate_random_target(static_cast<size_t>(target_shape[1]));
         target.upload(target_data.data());
         
         // Perform training step
@@ -152,42 +152,5 @@ TEST_F(LeNet5Test, MultipleTrainingSteps) {
     EXPECT_TRUE(loss_decreased);
 }
 
-TEST_F(LeNet5Test, DifferentLearningRates) {
-    // Test with different learning rates
-    std::vector<float> learning_rates = {0.1f, 0.01f, 0.001f};
-    
-    for (float lr : learning_rates) {
-        LeNet5<float> model(lr);
-        
-        // Create input tensor
-        std::vector<size_t> input_shape = {1, 1, 32, 32};
-        tensor<float> input(input_shape);
-        
-        // Create target tensor
-        std::vector<size_t> target_shape = {1, 10};
-        tensor<float> target(target_shape);
-        
-        // Fill input with random data
-        std::vector<float> input_data = generate_random_input(input_shape[0] * input_shape[1] * input_shape[2] * input_shape[3]);
-        input.upload(input_data.data());
-        
-        // Fill target with random one-hot encoded data
-        std::vector<float> target_data = generate_random_target(target_shape[1]);
-        target.upload(target_data.data());
-        
-        // Record initial loss
-        float initial_loss = model.loss();
-        
-        // Perform training step
-        model.train_step(input, target);
-        
-        // Record new loss
-        float new_loss = model.loss();
-        
-        // Verify that loss has changed
-        EXPECT_NE(initial_loss, new_loss);
-    }
-}
-
 } // namespace test
-} // namespace lenet5 
+} // namespace dnn 

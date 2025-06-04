@@ -29,7 +29,7 @@ __global__ void pad2d_kernel(
     output[output_offset] = input[input_offset];
 }
 
-namespace lenet5::utils {
+namespace dnn::utils {
 
 inline void pad2d(
     const float* input_dev,  // [N, C, H_in, W_in]
@@ -54,4 +54,4 @@ inline void pad2d(
     cudaDeviceSynchronize();  // or remove if batched
 }
 
-} // namespace lenet5::utils
+} // namespace dnn::utils

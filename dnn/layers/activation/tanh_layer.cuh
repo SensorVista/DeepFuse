@@ -3,7 +3,7 @@
 #include "dnn/core/layer.cuh"
 #include "dnn/core/tensor.cuh"
 
-namespace lenet5 {
+namespace dnn {
 
 // Tanh activation layer
 // f(x) = tanh(x)
@@ -18,4 +18,4 @@ public:
     tensor<T> backward(const tensor<T>& grad_output, const tensor<T>& input) override;
 };
 
-} // namespace lenet5 
+} // namespace dnn 

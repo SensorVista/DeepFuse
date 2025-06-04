@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <algorithm>
 
-namespace lenet5 {
+namespace dnn {
 
 class MNISTLoader {
 public:
@@ -21,11 +21,11 @@ public:
         // Skip the header
         file.ignore(16);
 
-        std::vector<std::vector<float>> images(num_images, std::vector<float>(image_size));
+        std::vector<std::vector<float>> images(static_cast<size_t>(num_images), std::vector<float>(static_cast<size_t>(image_size)));
         for (int i = 0; i < num_images; ++i) {
-            std::vector<uint8_t> buffer(image_size);
-            file.read(reinterpret_cast<char*>(buffer.data()), image_size);
-            std::transform(buffer.begin(), buffer.end(), images[i].begin(), [](uint8_t pixel) {
+            std::vector<uint8_t> buffer(static_cast<size_t>(image_size));
+            file.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(image_size));
+            std::transform(buffer.begin(), buffer.end(), images[static_cast<size_t>(i)].begin(), [](uint8_t pixel) {
                 return static_cast<float>(pixel) / 255.0f;
             });
         }
@@ -42,11 +42,11 @@ public:
         // Skip the header
         file.ignore(8);
 
-        std::vector<uint8_t> labels(num_labels);
-        file.read(reinterpret_cast<char*>(labels.data()), num_labels);
+        std::vector<uint8_t> labels(static_cast<size_t>(num_labels));
+        file.read(reinterpret_cast<char*>(labels.data()), static_cast<std::streamsize>(num_labels));
 
         return labels;
     }
 };
 
-} // namespace lenet5 
+} // namespace dnn 

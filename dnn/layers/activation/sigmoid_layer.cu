@@ -4,7 +4,7 @@
 #include <iostream>
 
 template<typename T>
-__global__ void sigmoid_kernel(const T* input, T* output, size_t size) {
+__global__ void sigmoid_kernel(const T* input, T* output, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         output[idx] = T(1.0) / (T(1.0) + exp(-input[idx]));
@@ -12,7 +12,7 @@ __global__ void sigmoid_kernel(const T* input, T* output, size_t size) {
 }
 
 template<typename T>
-__global__ void sigmoid_derivative_kernel(const T* grad_output, const T* input, T* grad_input, size_t size) {
+__global__ void sigmoid_derivative_kernel(const T* grad_output, const T* input, T* grad_input, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         T sigmoid_x = T(1.0) / (T(1.0) + exp(-input[idx]));
@@ -20,7 +20,7 @@ __global__ void sigmoid_derivative_kernel(const T* grad_output, const T* input, 
     }
 }
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 tensor<T> SigmoidLayer<T>::forward(const tensor<T>& input) {
@@ -57,4 +57,4 @@ template class SigmoidLayer<float>;  // FP32
 // template class SigmoidLayer<__half>; // FP16
 // template class SigmoidLayer<__nv_bfloat16>; // BF16
 
-} // namespace lenet5
+} // namespace dnn

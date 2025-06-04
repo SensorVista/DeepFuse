@@ -3,7 +3,7 @@
 #include <vector>
 #include <cmath>
 
-namespace lenet5 {
+namespace dnn {
 namespace test {
 
 class BinaryCrossEntropyTest : public ::testing::Test {
@@ -41,7 +41,7 @@ TEST_F(BinaryCrossEntropyTest, ForwardPass) {
     BinaryCrossEntropyLoss<float> loss;
     
     // Create prediction and target tensors
-    std::vector<size_t> shape = {1, 4};
+    std::vector<int> shape = {1, 4};
     tensor<float> predictions(shape);
     tensor<float> targets(shape);
     
@@ -65,7 +65,7 @@ TEST_F(BinaryCrossEntropyTest, BackwardPass) {
     BinaryCrossEntropyLoss<float> loss;
     
     // Create prediction and target tensors
-    std::vector<size_t> shape = {1, 4};
+    std::vector<int> shape = {1, 4};
     tensor<float> predictions(shape);
     tensor<float> targets(shape);
     
@@ -95,7 +95,7 @@ TEST_F(BinaryCrossEntropyTest, EdgeCases) {
     BinaryCrossEntropyLoss<float> loss;
     
     // Create prediction and target tensors
-    std::vector<size_t> shape = {1, 4};
+    std::vector<int> shape = {1, 4};
     tensor<float> predictions(shape);
     tensor<float> targets(shape);
     
@@ -133,7 +133,7 @@ TEST_F(BinaryCrossEntropyTest, NumericalStability) {
     BinaryCrossEntropyLoss<float> loss;
     
     // Create prediction and target tensors
-    std::vector<size_t> shape = {1, 4};
+    std::vector<int> shape = {1, 4};
     tensor<float> predictions(shape);
     tensor<float> targets(shape);
     
@@ -166,4 +166,4 @@ TEST_F(BinaryCrossEntropyTest, NumericalStability) {
 }
 
 } // namespace test
-} // namespace lenet5 
+} // namespace dnn 

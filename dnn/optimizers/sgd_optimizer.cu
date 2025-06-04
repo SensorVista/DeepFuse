@@ -3,7 +3,7 @@
 
 #include <cuda_runtime.h>
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 __global__ void sgd_update_kernel(
@@ -13,7 +13,7 @@ __global__ void sgd_update_kernel(
     T learning_rate,    // Learning rate
     T momentum,         // Momentum coefficient
     T weight_decay,     // Weight decay coefficient
-    size_t size         // Size of the parameter
+    int size            // Size of the parameter
 ) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
@@ -33,10 +33,10 @@ __global__ void sgd_update_kernel(
 
 template<typename T>
 void SGDOptimizer<T>::step() {
-    for (size_t i = 0; i < this->parameters_.size(); ++i) {
+    for (int i = 0; i < this->parameters_.size(); ++i) {
 
         auto* param = this->parameters_[i];
-        size_t size = param->size();
+        int size = param->size();
         
         int block_size = 256;
         int num_blocks = (size + block_size - 1) / block_size;
@@ -78,4 +78,4 @@ void SGDOptimizer<T>::update_parameters(const std::vector<tensor<T>*>& parameter
 template class SGDOptimizer<float>;  // FP32
 // template class SGDOptimizer<__half>;
 
-} // namespace lenet5 
+} // namespace dnn 

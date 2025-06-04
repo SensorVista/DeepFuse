@@ -8,7 +8,7 @@
 #include <vector>
 #include <memory>
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 class Layer {
@@ -32,7 +32,7 @@ public:
 
 protected:
     // Helper function to check input shape
-    bool check_input_shape(const tensor<T>& input, const std::vector<size_t>& expected_shape) const {
+    bool check_input_shape(const tensor<T>& input, const std::vector<int>& expected_shape) const {
         return input.shape() == expected_shape;
     }
 };
@@ -42,4 +42,4 @@ template class Layer<float>;  // FP32
 // template class Layer<__half>; // FP16
 // template class Layer<__nv_bfloat16>; // BF16
 
-} // namespace lenet5 
+} // namespace dnn 

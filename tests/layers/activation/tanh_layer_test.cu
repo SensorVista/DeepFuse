@@ -3,7 +3,7 @@
 #include <vector>
 #include <cmath>
 
-namespace lenet5 {
+namespace dnn {
 namespace test {
 
 class TanhLayerTest : public ::testing::Test {
@@ -32,7 +32,7 @@ TEST_F(TanhLayerTest, ForwardPass) {
     TanhLayer<float> layer;
     
     // Create input tensor
-    std::vector<size_t> shape = {2, 2};
+    std::vector<int> shape = {2, 2};
     tensor<float> input(shape);
     
     // Test data
@@ -46,7 +46,7 @@ TEST_F(TanhLayerTest, ForwardPass) {
     std::vector<float> output_data(4);
     output.download(output_data.data());
     
-    for (size_t i = 0; i < input_data.size(); ++i) {
+    for (int i = 0; i < input_data.size(); ++i) {
         float expected = tanh_func(input_data[i]);
         EXPECT_NEAR(output_data[i], expected, 1e-5);
     }
@@ -56,7 +56,7 @@ TEST_F(TanhLayerTest, BackwardPass) {
     TanhLayer<float> layer;
     
     // Create input and gradient tensors
-    std::vector<size_t> shape = {2, 2};
+    std::vector<int> shape = {2, 2};
     tensor<float> input(shape);
     tensor<float> grad_output(shape);
     
@@ -74,7 +74,7 @@ TEST_F(TanhLayerTest, BackwardPass) {
     std::vector<float> grad_input_data(4);
     grad_input.download(grad_input_data.data());
     
-    for (size_t i = 0; i < input_data.size(); ++i) {
+    for (int i = 0; i < input_data.size(); ++i) {
         float expected = grad_data[i] * tanh_derivative(input_data[i]);
         EXPECT_NEAR(grad_input_data[i], expected, 1e-5);
     }
@@ -84,7 +84,7 @@ TEST_F(TanhLayerTest, EdgeCases) {
     TanhLayer<float> layer;
     
     // Create input tensor
-    std::vector<size_t> shape = {1, 1};
+    std::vector<int> shape = {1, 1};
     tensor<float> input(shape);
     
     // Test very large and very small values
@@ -108,7 +108,7 @@ TEST_F(TanhLayerTest, ZeroInput) {
     TanhLayer<float> layer;
     
     // Create input tensor
-    std::vector<size_t> shape = {1, 1};
+    std::vector<int> shape = {1, 1};
     tensor<float> input(shape);
     
     // Test zero input
@@ -137,4 +137,4 @@ TEST_F(TanhLayerTest, ZeroInput) {
 }
 
 } // namespace test
-} // namespace lenet5 
+} // namespace dnn 

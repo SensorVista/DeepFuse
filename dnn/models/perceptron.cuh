@@ -8,12 +8,12 @@
 #include "../optimizers/sgd_optimizer.cuh"
 #include <memory>
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 class Perceptron : public TrainingModel<T> {
 public:
-    Perceptron(size_t input_size, size_t hidden_size, size_t output_size) 
+    Perceptron(int input_size, int hidden_size, int output_size) 
         : TrainingModel<T>() {
         // Create MLP architecture
         // Input -> Hidden layer
@@ -26,4 +26,4 @@ public:
     }
 };
 
-} // namespace lenet5 
+} // namespace dnn 

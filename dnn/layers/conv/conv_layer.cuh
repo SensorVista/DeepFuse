@@ -5,12 +5,12 @@
 #include <iostream>
 #include <random>
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 class ConvLayer : public Layer<T> {
 public:
-    ConvLayer(size_t in_channels, size_t out_channels, const std::vector<size_t>& kernel_size, size_t stride, size_t padding, const std::vector<std::vector<bool>>& connection_table = {})
+    ConvLayer(int in_channels, int out_channels, const std::vector<int>& kernel_size, int stride, int padding, const std::vector<std::vector<bool>>& connection_table = {})
         : in_channels_(in_channels)
         , out_channels_(out_channels)
         , kernel_size_(kernel_size)
@@ -27,8 +27,8 @@ public:
                 throw std::runtime_error("Connection table dimensions do not match in/out channels.");
             }
             std::vector<uint8_t> host_connection_mask(out_channels * in_channels);
-            for (size_t i = 0; i < out_channels; ++i) {
-                for (size_t j = 0; j < in_channels; ++j) {
+            for (int i = 0; i < out_channels; ++i) {
+                for (int j = 0; j < in_channels; ++j) {
                     host_connection_mask[i * in_channels + j] = connection_table[i][j] ? 1 : 0;
                 }
             }
@@ -46,11 +46,11 @@ public:
     const char* name() const override { return "Conv"; }
 
 private:
-    size_t in_channels_;
-    size_t out_channels_;
-    std::vector<size_t> kernel_size_;
-    size_t stride_;
-    size_t padding_;
+    int in_channels_;
+    int out_channels_;
+    std::vector<int> kernel_size_;
+    int stride_;
+    int padding_;
     tensor<T> weights_;
     tensor<T> bias_;
     tensor<T> grad_weights_;
@@ -61,13 +61,12 @@ private:
     void initialize_weights() {
         std::random_device rd;
         std::mt19937 gen(rd());
-        // Xavier/Glorot initialization
-        float limit = std::sqrt(6.0f / (in_channels_ * kernel_size_[0] * kernel_size_[1] + out_channels_ * kernel_size_[0] * kernel_size_[1])); // Adjusted for Glorot uniform
+        float limit = std::sqrt(6.0f / (in_channels_ * kernel_size_[0] * kernel_size_[1] + out_channels_ * kernel_size_[0] * kernel_size_[1]));
         std::uniform_real_distribution<T> dist(-limit, limit);
 
         std::vector<T> host_weights(weights_.size());
         std::vector<T> host_bias(bias_.size());
-        for (size_t i = 0; i < host_weights.size(); ++i) {
+        for (int i = 0; i < host_weights.size(); ++i) {
             host_weights[i] = dist(gen);
         }
         std::fill(host_bias.begin(), host_bias.end(), static_cast<T>(0.0f));
@@ -76,4 +75,4 @@ private:
     }
 };
 
-} // namespace lenet5 
+} // namespace dnn 

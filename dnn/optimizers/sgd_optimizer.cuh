@@ -2,7 +2,7 @@
 
 #include "dnn/optimizers/optimizer.cuh"
 
-namespace lenet5 {
+namespace dnn {
 
 // SGD (Stochastic Gradient Descent) optimizer efficiently minimizes a loss function and improves 
 // model accuracy by iteratively updating the model's parameters based on the gradients calculated 
@@ -30,4 +30,4 @@ private:
     std::vector<tensor<T>> velocities_;
 };
 
-} // namespace lenet5 
+} // namespace dnn 

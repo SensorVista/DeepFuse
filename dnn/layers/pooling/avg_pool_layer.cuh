@@ -3,12 +3,12 @@
 #include "dnn/core/layer.cuh"
 #include "dnn/core/tensor.cuh"
 
-namespace lenet5 {
+namespace dnn {
 
 template<typename T>
 class AvgPoolLayer : public Layer<T> {
 public:
-    AvgPoolLayer(size_t kernel_size, size_t stride);
+    AvgPoolLayer(int kernel_size, int stride);
 
     const char* name() const override { return "AvgPool"; }
 
@@ -16,8 +16,8 @@ public:
     tensor<T> backward(const tensor<T>& grad_output, const tensor<T>& input) override;
     
 private:
-    size_t kernel_size_;
-    size_t stride_;
+    int kernel_size_;
+    int stride_;
 };
 
-} // namespace lenet5 
+} // namespace dnn 
