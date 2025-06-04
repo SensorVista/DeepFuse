@@ -1,4 +1,4 @@
-#include "dnn/losses/binary_cross_entropy.cuh"
+#include "binary_cross_entropy.cuh"
 
 #include <cuda_runtime.h>
 

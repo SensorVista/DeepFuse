@@ -27,15 +27,24 @@ __global__ void fill_kernel(T* data, T value, int size) {
 namespace dnn {
 
 template<typename T>
-tensor<T>::tensor(const std::vector<int>& shape) : shape_(shape), data_(nullptr), desc_(nullptr) {
+tensor<T>::tensor(const std::vector<int>& shape)
+: shape_(shape)
+, data_(nullptr)
+#ifdef ENABLE_CUDNN
+, desc_(nullptr) 
+#endif
+{
+#ifdef ENABLE_CUDNN
     if (shape.size() < 1 || shape.size() > CUDNN_DIM_MAX) {
         throw std::invalid_argument("cuDNN only supports 1 to 8 dimensions");
     }
+#endif
 
     total_size_ = 1;
     for (int d : shape) total_size_ *= d;
     cudaMalloc(&data_, total_size_ * sizeof(T));
 
+#ifdef ENABLE_CUDNN
     cudnnCreateTensorDescriptor(&desc_);
 
     // Use Nd descriptor for general case
@@ -62,17 +71,71 @@ tensor<T>::tensor(const std::vector<int>& shape) : shape_(shape), data_(nullptr)
         dims.data(),
         strides.data()
     );
+#endif
 }
+
+#ifdef ENABLE_CUDNN
+template<typename T>
+cudnnTensorDescriptor_t tensor<T>::desc() const { 
+    return desc_; 
+}
+
+template<typename T>
+cudnnDataType_t tensor<T>::dnn_type() const { 
+    if constexpr (std::is_same_v<T, float>)
+        return CUDNN_DATA_FLOAT;
+    else if constexpr (std::is_same_v<T, __half>)
+        return CUDNN_DATA_HALF;
+    else if constexpr (std::is_same_v<T, __nv_bfloat16>)
+        return CUDNN_DATA_BFLOAT16;
+#ifdef __CUDA_FP8_TYPES_EXIST__
+    else if constexpr (std::is_same_v<T, __nv_fp8x4_e5m2>)
+        return CUDNN_DATA_FP8_E5M2;
+    else if constexpr (std::is_same_v<T, __nv_fp8x4_e4m3>)
+        return CUDNN_DATA_FP8_E4M3;
+#endif
+    else if constexpr (std::is_same_v<T, int8_t>)
+        return CUDNN_DATA_INT8;
+    else if constexpr (std::is_same_v<T, uint8_t>)
+        return CUDNN_DATA_UINT8;
+    else
+        throw std::runtime_error("Unsupported data type for cuDNN");
+}
+
+template<typename T>
+cudaDataType_t tensor<T>::blas_type() const {
+    if constexpr (std::is_same_v<T, float>)
+        return CUDA_R_32F;
+    else if constexpr (std::is_same_v<T, __half>)
+        return CUDA_R_16F;
+    else if constexpr (std::is_same_v<T, __nv_bfloat16>)
+        return CUDA_R_16BF;
+#ifdef __CUDA_FP8_TYPES_EXIST__
+    else if constexpr (std::is_same_v<T, __nv_fp8x4_e5m2>)
+        return CUDA_R_8F_E5M2;
+    else if constexpr (std::is_same_v<T, __nv_fp8x4_e4m3>)
+        return CUDA_R_8F_E4M3;
+#endif
+    else if constexpr (std::is_same_v<T, int8_t>)
+        return CUDA_R_8I;
+    else if constexpr (std::is_same_v<T, uint8_t>)
+        return CUDA_R_8U;
+    else
+        throw std::runtime_error("Unsupported data type for cuBLAS");
+}
+#endif
 
 template<typename T>
 tensor<T>::~tensor() {
     if (data_) {
         CHECK_CUDA_EX(cudaFree(data_));
     }
+#ifdef ENABLE_CUDNN
     if (desc_) {
         CHECK_CUDNN_EX(cudnnDestroyTensorDescriptor(desc_));
         desc_ = nullptr;
     }
+#endif
 }
 
 template<typename T>
@@ -129,9 +192,17 @@ void tensor<T>::zero() {
 
 template<typename T>
 tensor<T>::tensor(tensor&& other) noexcept 
-    : shape_(std::move(other.shape_)), data_(other.data_), total_size_(other.total_size_), desc_(other.desc_) {
+    : shape_(std::move(other.shape_))
+    , data_(other.data_)
+    , total_size_(other.total_size_)
+#ifdef ENABLE_CUDNN
+    , desc_(other.desc_) 
+#endif
+{
     other.data_ = nullptr; // Nullify the source pointer
+#ifdef ENABLE_CUDNN
     other.desc_ = nullptr; // Nullify the source descriptor
+#endif
 }
 
 template<typename T>
@@ -141,19 +212,22 @@ tensor<T>& tensor<T>::operator=(tensor&& other) noexcept {
         if (data_) {
             CHECK_CUDA_EX(cudaFree(data_));
         }
+#ifdef ENABLE_CUDNN
         if (desc_) { // Destroy existing descriptor
             CHECK_CUDNN_EX(cudnnDestroyTensorDescriptor(desc_));
             desc_ = nullptr;
         }
-
+#endif
         // Transfer ownership
         shape_ = std::move(other.shape_);
         data_ = other.data_;
         total_size_ = other.total_size_;
-        desc_ = other.desc_; // Transfer descriptor
-
         other.data_ = nullptr; // Nullify the source pointer
+
+#ifdef ENABLE_CUDNN
+        desc_ = other.desc_; // Transfer descriptor
         other.desc_ = nullptr; // Nullify the source descriptor
+#endif
     }
     return *this;
 }

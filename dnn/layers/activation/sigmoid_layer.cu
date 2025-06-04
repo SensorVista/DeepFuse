@@ -1,4 +1,5 @@
-#include "dnn/layers/activation/sigmoid_layer.cuh"
+#include "sigmoid_layer.cuh"
+#include "../../utils/common.cuh"
 
 #include <cuda_runtime.h>
 #include <iostream>

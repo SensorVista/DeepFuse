@@ -7,6 +7,10 @@
 #include <cuda_fp16.h>
 #include <type_traits>
 
+#ifdef ENABLE_CUDNN
+#include <cudnn.h>
+#endif
+
 #include <vector>
 #include <random>
 
@@ -21,18 +25,17 @@ private:
 	tensor<T> grad_bias_;
 	int in_features_;
 	int out_features_;
+#ifdef ENABLE_CUDNN
+	cudnnFilterDescriptor_t filter_desc_;
+	cudnnConvolutionDescriptor_t conv_desc_;
+	cudnnTensorDescriptor_t input_desc_;
+	cudnnTensorDescriptor_t output_desc_;
+#endif
 
 public:
-	FullyConnectedLayer(int in_features, int out_features)
-		: in_features_(in_features)
-		, out_features_(out_features)
-		, weights_({ out_features, in_features })
-		, bias_({ out_features })
-		, grad_weights_({ out_features, in_features })
-		, grad_bias_({ out_features }) {
-		initialize_weights();
-	}
-
+	FullyConnectedLayer(int in_features, int out_features);
+	~FullyConnectedLayer();
+	
 	tensor<T> forward(const tensor<T>& input) override;
 
 	tensor<T> backward(const tensor<T>& grad_output, const tensor<T>& input) override;
@@ -45,7 +48,7 @@ public:
 		return { &grad_weights_, &grad_bias_ };
 	}
 
-	const char* name() const override {
+	std::string name() const override {
 		return "FullyConnected";
 	}
 

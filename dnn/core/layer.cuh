@@ -5,6 +5,7 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 
+#include <string>
 #include <vector>
 #include <memory>
 
@@ -28,7 +29,7 @@ public:
     virtual std::vector<tensor<T>*> gradients() { return {}; };
 
     // Get layer name
-    virtual const char* name() const = 0;
+    virtual std::string name() const = 0;
 
 protected:
     // Helper function to check input shape

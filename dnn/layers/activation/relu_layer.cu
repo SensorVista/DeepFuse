@@ -1,5 +1,5 @@
 #include "relu_layer.cuh"
-#include "dnn/utils/common.cuh"
+#include "../../utils/common.cuh"
 
 #include <cuda_runtime.h>
 

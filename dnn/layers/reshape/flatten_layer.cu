@@ -1,5 +1,5 @@
-#include "dnn/layers/reshape/flatten_layer.cuh"
-#include "dnn/utils/common.cuh"
+#include "flatten_layer.cuh"
+#include "../../utils/common.cuh"
 
 #include <cuda_runtime.h>
 

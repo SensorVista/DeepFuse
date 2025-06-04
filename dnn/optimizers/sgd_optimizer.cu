@@ -1,5 +1,5 @@
-#include "dnn/optimizers/sgd_optimizer.cuh"
-#include "dnn/utils/common.cuh"
+#include "sgd_optimizer.cuh"
+#include "../utils/common.cuh"
 
 #include <cuda_runtime.h>
 

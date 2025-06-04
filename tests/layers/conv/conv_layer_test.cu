@@ -56,7 +56,7 @@ TEST_F(ConvLayerTest, ConstructorAndInitialization) {
     EXPECT_EQ(params[0]->shape()[3], kernel_size[1]);
     
     // Check bias shape
-    EXPECT_EQ(params[1]->shape()[0], out_channels);
+    EXPECT_EQ(params[1]->shape()[1], out_channels);
 }
 
 TEST_F(ConvLayerTest, ForwardPass) {
@@ -148,7 +148,7 @@ TEST_F(ConvLayerTest, BackwardPass) {
     EXPECT_EQ(grads[0]->shape()[3], kernel_size[1]);
     
     // Verify bias gradients shape
-    EXPECT_EQ(grads[1]->shape()[0], out_channels);
+    EXPECT_EQ(grads[1]->shape()[1], out_channels);
 }
 
 TEST_F(ConvLayerTest, DifferentStrideAndPadding) {

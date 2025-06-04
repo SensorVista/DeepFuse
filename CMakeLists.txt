@@ -3,6 +3,9 @@ project(DeepLearning
     DESCRIPTION "Deep Learning Library for CUDA."
     LANGUAGES C CUDA CXX)
 
+# Declare global option
+set(USE_CUDNN OFF)
+
 # Remove /RTC1 from CUDA debug flags to avoid conflict with /O2
 if(MSVC)
     string(REPLACE "/RTC1" "" CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG}")
@@ -17,17 +20,20 @@ set(CMAKE_CUDA_STANDARD 17)
 # Find CUDA
 find_package(CUDAToolkit REQUIRED)
 
-add_library(cublas STATIC IMPORTED GLOBAL)
-set_target_properties(cublas PROPERTIES
-    IMPORTED_LOCATION "${CUDAToolkit_LIBRARY_DIR}/cublas.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${CUDAToolkit_INCLUDE_DIR}"
-)
-
-add_library(cudnn STATIC IMPORTED GLOBAL)
-set_target_properties(cudnn PROPERTIES
-    IMPORTED_LOCATION "${CUDAToolkit_LIBRARY_DIR}/cudnn.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${CUDAToolkit_INCLUDE_DIR}"
-)
+# Enable cuDNN
+if(DEFINED USE_CUDNN AND USE_CUDNN)
+    add_library(cublas STATIC IMPORTED GLOBAL)
+    set_target_properties(cublas PROPERTIES
+        IMPORTED_LOCATION "${CUDAToolkit_LIBRARY_DIR}/cublas.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${CUDAToolkit_INCLUDE_DIR}"
+    )
+    
+    add_library(cudnn STATIC IMPORTED GLOBAL)
+    set_target_properties(cudnn PROPERTIES
+        IMPORTED_LOCATION "${CUDAToolkit_LIBRARY_DIR}/cudnn.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${CUDAToolkit_INCLUDE_DIR}"
+    )    
+endif()
 
 # Enable testing
 enable_testing()

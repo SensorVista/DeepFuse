@@ -10,7 +10,7 @@ class AvgPoolLayer : public Layer<T> {
 public:
     AvgPoolLayer(int kernel_size, int stride);
 
-    const char* name() const override { return "AvgPool"; }
+    std::string name() const override { return "AvgPool"; }
 
     tensor<T> forward(const tensor<T>& input) override;
     tensor<T> backward(const tensor<T>& grad_output, const tensor<T>& input) override;

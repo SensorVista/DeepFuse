@@ -2,6 +2,10 @@
 #include "dnn/core/layer.cuh"
 #include "dnn/core/tensor.cuh"
 
+#ifdef ENABLE_CUDNN
+#include <cudnn.h>
+#endif
+
 #include <iostream>
 #include <random>
 
@@ -17,11 +21,18 @@ public:
         , stride_(stride)
         , padding_(padding)
         , weights_({out_channels, in_channels, kernel_size[0], kernel_size[1]})
-        , bias_({out_channels})
+        , bias_({1, out_channels, 1, 1})  // Match NCHW format
         , grad_weights_({out_channels, in_channels, kernel_size[0], kernel_size[1]})
-        , grad_bias_({out_channels})
+        , grad_bias_({1, out_channels, 1, 1})  // Match NCHW format
         , connection_mask_dev_({out_channels, in_channels})
-        , use_sparse_connectivity_(connection_table.size() > 0) {
+        , use_sparse_connectivity_(connection_table.size() > 0)
+#ifdef ENABLE_CUDNN
+        , filter_desc_(nullptr)
+        , conv_desc_(nullptr)
+        , input_desc_(nullptr)
+        , output_desc_(nullptr)
+#endif
+    {
         if (use_sparse_connectivity_) {
             if (connection_table.size() != out_channels || connection_table[0].size() != in_channels) {
                 throw std::runtime_error("Connection table dimensions do not match in/out channels.");
@@ -37,13 +48,15 @@ public:
         initialize_weights();
     }
 
+    ~ConvLayer();
+
     tensor<T> forward(const tensor<T>& input) override;
     tensor<T> backward(const tensor<T>& grad_output, const tensor<T>& input) override;
 
     std::vector<tensor<T>*> parameters() override { return {&weights_, &bias_}; }
     std::vector<tensor<T>*> gradients() override { return {&grad_weights_, &grad_bias_}; }
 
-    const char* name() const override { return "Conv"; }
+    std::string name() const override { return "Conv"; }
 
 private:
     int in_channels_;
@@ -57,6 +70,13 @@ private:
     tensor<T> grad_bias_;
     tensor<uint8_t> connection_mask_dev_; // Flattened mask for device
     bool use_sparse_connectivity_;
+
+#ifdef ENABLE_CUDNN
+    cudnnFilterDescriptor_t filter_desc_;
+    cudnnConvolutionDescriptor_t conv_desc_;
+    cudnnTensorDescriptor_t input_desc_;
+    cudnnTensorDescriptor_t output_desc_;
+#endif
 
     void initialize_weights() {
         std::random_device rd;

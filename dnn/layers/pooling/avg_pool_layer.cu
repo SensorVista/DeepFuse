@@ -1,5 +1,5 @@
-#include "dnn/layers/pooling/avg_pool_layer.cuh"
-#include "dnn/utils/common.cuh"
+#include "avg_pool_layer.cuh"
+#include "../../utils/common.cuh"
 
 #include <cuda_runtime.h>
 

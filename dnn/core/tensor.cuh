@@ -3,7 +3,14 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 #include <cuda_bf16.h>
+
+#ifdef __CUDA_FP8_TYPES_EXIST__
+#include <cuda_fp8.h>
+#endif
+
+#ifdef ENABLE_CUDNN
 #include <cudnn.h>
+#endif
 
 #include <vector>
 #include <string>
@@ -17,7 +24,9 @@ protected:
     std::vector<int> shape_;
     T* data_;
     int total_size_;
+#ifdef ENABLE_CUDNN
     cudnnTensorDescriptor_t desc_;
+#endif
 
 public:
     tensor(const std::vector<int>& shape);
@@ -67,14 +76,30 @@ public:
     // Output tensor to string
     std::string to_string() const;
 
+#ifdef ENABLE_CUDNN
     // cuDNN descriptor
-    cudnnTensorDescriptor_t descriptor() const { return desc_; }
+    cudnnTensorDescriptor_t desc() const;
+
+    // cuDNN data type
+    cudnnDataType_t dnn_type() const;
+
+    // cuBLAS data type
+    cudaDataType_t blas_type() const;
+#endif
 };
 
 // Forward declarations for supported template types
 template class tensor<float>;  // FP32
 template class tensor<__half>; // FP16
 template class tensor<__nv_bfloat16>; // BF16
+
+#ifdef __CUDA_FP8_TYPES_EXIST__
+// Use FP8 Tensor Core Hopper+ (SM 9.0+)
+template class tensor<__nv_fp8x4_e5m2>;
+template class tensor<__nv_fp8x4_e4m3>;
+#endif
+
+// general purpose (or int8 emulation if needed)
 template class tensor<int8_t>;
 template class tensor<uint8_t>;
 

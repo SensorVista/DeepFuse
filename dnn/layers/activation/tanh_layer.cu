@@ -1,5 +1,5 @@
-#include "dnn/layers/activation/tanh_layer.cuh"
-#include "dnn/utils/common.cuh"
+#include "tanh_layer.cuh"
+#include "../../utils/common.cuh"
 
 #include <cuda_runtime.h>
 #include <iostream>

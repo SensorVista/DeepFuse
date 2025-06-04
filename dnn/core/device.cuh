@@ -3,7 +3,11 @@
 #include "../utils/common.cuh"
 
 #include <cuda_runtime.h>
+
+#ifdef ENABLE_CUDNN
 #include <cudnn.h>
+#include <cublas_v2.h>
+#endif
 
 #include <iostream>
 #include <string>
@@ -11,12 +15,11 @@
 #include <memory>
 #include <unordered_map>
 #include <iomanip>
+#include <thread>
 
 namespace dnn {
 
-//======================================================
 // Device: Holds hardware capability info
-//======================================================
 class Device {
 public:
     explicit Device(int device_id) : id_(device_id) {
@@ -120,24 +123,45 @@ private:
     cudaDeviceProp props_;
 };
 
-//======================================================
 // Cuda: Sets context and manages cudnnHandle_t
-//======================================================
 class Cuda {
+private:
+    int id_;
+    #ifdef ENABLE_CUDNN
+    cudnnHandle_t handle_ = nullptr;
+    cublasHandle_t cublas_handle_ = nullptr;    
+    #endif
+
+    static Cuda*& current_instance_ref() {
+        static thread_local Cuda* instance = nullptr;
+        return instance;
+    }
+
 public:
     explicit Cuda(int device_id = 0) : id_(device_id) {
         utils::CHECK_CUDA_EX(cudaSetDevice(id_));
+        #ifdef ENABLE_CUDNN
         cudnnCreate(&handle_);
+        cublasCreate(&cublas_handle_);
+        #endif
+        current_instance_ref() = this;
     }
 
     ~Cuda() {
+        #ifdef ENABLE_CUDNN
         if (handle_) cudnnDestroy(handle_);
+        if (cublas_handle_) cublasDestroy(cublas_handle_);
+        #endif
+        current_instance_ref() = nullptr;
     }
 
-    cudnnHandle_t get() const { return handle_; }
+    #ifdef ENABLE_CUDNN
+    cudnnHandle_t cudnn() const { return handle_; }
+    cublasHandle_t cublas() const { return cublas_handle_; }
+    #endif
+
     int id() const { return id_; }
 
-    // Static cached device list
     static const std::vector<Device>& get_devices() {
         static std::vector<Device> cache = [] {
             int count = 0;
@@ -146,7 +170,7 @@ public:
             for (int i = 0; i < count; ++i)
                 result.emplace_back(i);
             return result;
-        }();
+            }();
         return cache;
     }
 
@@ -156,11 +180,14 @@ public:
             device.dump_info(os);
             os << std::endl;
         }
-    }    
+    }
 
-private:
-    int id_;
-    cudnnHandle_t handle_ = nullptr;
+    static Cuda& current() {
+        Cuda* inst = current_instance_ref();
+        if (!inst) throw std::runtime_error("No current Cuda instance set.");
+        return *inst;
+    }
 };
+
 
 } // namespace dnn

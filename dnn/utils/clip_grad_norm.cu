@@ -10,6 +10,7 @@ __global__ void clip_grad_norm_kernel(float* grad, float norm, float max_norm, i
 }
 
 namespace dnn::utils {
+    
     void clip_grad_norm(std::vector<tensor<float>*>& gradients, float max_norm) {
         float total_norm = 0.0f;
         for (auto* grad_tensor : gradients) {

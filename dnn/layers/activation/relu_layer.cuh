@@ -11,7 +11,7 @@ public:
     ReLULayer() = default;
     ~ReLULayer() = default;
 
-    const char* name() const override { return "ReLU"; }
+    std::string name() const override { return "ReLU"; }
 
     tensor<T> forward(const tensor<T>& input) override;
     tensor<T> backward(const tensor<T>& grad_output, const tensor<T>& input) override;

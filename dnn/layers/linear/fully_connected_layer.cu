@@ -1,5 +1,6 @@
-#include "dnn/layers/linear/fully_connected_layer.cuh"
-#include "dnn/utils/common.cuh"
+#include "fully_connected_layer.cuh"
+#include "../../utils/common.cuh"
+#include "../../core/device.cuh"
 
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
@@ -9,6 +10,7 @@
 
 namespace dnn {
 
+#ifndef ENABLE_CUDNN
 // Utility for __half support (host <-> device)
 __device__ __forceinline__ float to_float(float v) { return v; }
 __device__ __forceinline__ float to_float(__half v) { return __half2float(v); }
@@ -109,32 +111,192 @@ __global__ void fc_backward_bias(
             db[out_idx] = static_cast<T>(sum);
     }
 }
+#endif
+
+template<typename T>
+FullyConnectedLayer<T>::FullyConnectedLayer(int in_features, int out_features)
+    : in_features_(in_features)
+    , out_features_(out_features)
+    , weights_({ out_features, in_features })
+    , bias_({ 1, out_features, 1, 1 })               // Match NCHW format
+    , grad_weights_({ out_features, in_features })
+    , grad_bias_({ 1, out_features, 1, 1 })          // Match NCHW format
+#ifdef ENABLE_CUDNN
+    , filter_desc_(nullptr)
+    , conv_desc_(nullptr)
+    , input_desc_(nullptr)
+    , output_desc_(nullptr)
+#endif
+{
+#ifdef ENABLE_CUDNN
+    utils::CHECK_CUDNN_EX(cudnnCreateFilterDescriptor(&filter_desc_));
+    utils::CHECK_CUDNN_EX(cudnnCreateConvolutionDescriptor(&conv_desc_));
+    utils::CHECK_CUDNN_EX(cudnnCreateTensorDescriptor(&input_desc_));
+    utils::CHECK_CUDNN_EX(cudnnCreateTensorDescriptor(&output_desc_));
+
+    // Set up filter descriptor for weights
+    utils::CHECK_CUDNN_EX(cudnnSetFilter4dDescriptor(filter_desc_, 
+        CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW,
+        out_features_, in_features_, 1, 1));
+
+    // Set up convolution descriptor
+    utils::CHECK_CUDNN_EX(cudnnSetConvolution2dDescriptor(conv_desc_,
+        0, 0, 1, 1, 1, 1, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
+#endif
+
+    initialize_weights();
+
+#ifdef ENABLE_CUDNN
+utils::CHECK_CUDNN_EX(cudnnSetTensor4dDescriptor(bias_.desc(),
+    CUDNN_TENSOR_NCHW, utils::dnn_type<T>(), 1, out_features_, 1, 1));
+utils::CHECK_CUDNN_EX(cudnnSetTensor4dDescriptor(grad_bias_.desc(),
+    CUDNN_TENSOR_NCHW, utils::dnn_type<T>(), 1, out_features_, 1, 1));
+#endif    
+}
+
+template<typename T>
+FullyConnectedLayer<T>::~FullyConnectedLayer() {
+#ifdef ENABLE_CUDNN
+    if (filter_desc_) utils::CHECK_CUDNN_EX(cudnnDestroyFilterDescriptor(filter_desc_));
+    if (conv_desc_) utils::CHECK_CUDNN_EX(cudnnDestroyConvolutionDescriptor(conv_desc_));
+    if (input_desc_) utils::CHECK_CUDNN_EX(cudnnDestroyTensorDescriptor(input_desc_));
+    if (output_desc_) utils::CHECK_CUDNN_EX(cudnnDestroyTensorDescriptor(output_desc_));
+#endif
+}
 
 template<typename T>
 tensor<T> FullyConnectedLayer<T>::forward(const tensor<T>& input) {
+#ifdef ENABLE_CUDNN
+    int N = input.shape()[0];
+    tensor<T> output({ N, out_features_ });
+
+    // Set up input and output descriptors
+    utils::CHECK_CUDNN_EX(cudnnSetTensor4dDescriptor(input_desc_,
+        CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+        N, in_features_, 1, 1));
+    utils::CHECK_CUDNN_EX(cudnnSetTensor4dDescriptor(output_desc_,
+        CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+        N, out_features_, 1, 1));
+
+    const float alpha = 1.0f, beta = 0.0f;
+    auto handle = Cuda::current().cudnn();
+
+    // Forward pass using cuDNN convolution
+    utils::CHECK_CUDNN_EX(cudnnConvolutionForward(handle,
+        &alpha, input_desc_, input.data(),
+        filter_desc_, weights_.data(),
+        conv_desc_, CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM,
+        nullptr, 0, &beta, output_desc_, output.data()));
+
+    // Add bias
+    utils::CHECK_CUDNN_EX(cudnnAddTensor(handle,
+        &alpha, bias_.desc(), bias_.data(),
+        &alpha, output_desc_, output.data()));
+
+    return output;
+#else
     int N = input.shape()[0];
     tensor<T> output({ N, out_features_ });
     dim3 blockDim(256);
     dim3 gridDim((out_features_ + blockDim.x - 1) / blockDim.x, N);
 
-    fully_connected_forward_kernel<T> << <gridDim, blockDim, 0, 0 >> > (
+    fully_connected_forward_kernel<T><<<gridDim, blockDim>>>(
         input.data(),
         weights_.data(),
         bias_.data(),
         output.data(),
         N, in_features_, out_features_
-        );
+    );
 
     utils::THROW_CUDA_EX();
-
     return output;
+#endif
 }
 
 template<typename T>
 tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& input) {
     const int N = input.shape()[0];
 
-    // [1] Allocate gradient of input for chain rule
+#ifdef ENABLE_CUDNN
+    auto& cuda = Cuda::current();
+    auto handle_blas = cuda.cublas();
+    auto handle_dnn = cuda.cudnn();
+
+    int batch_size = input.shape()[0];
+
+    tensor<T> grad_input({ batch_size, in_features_ });
+
+    // grad_input = grad_output * weights^T
+    utils::CHECK_CUBLAS_EX(cublasGemmEx(
+        handle_blas,
+        CUBLAS_OP_T, CUBLAS_OP_N,  // A^T * B
+        in_features_, batch_size, out_features_,
+        utils::one<T>(),
+        weights_.data(), weights_.blas_type(), in_features_,       // lda
+        grad_output.data(), grad_output.blas_type(), out_features_, // ldb
+        utils::zero<T>(),
+        grad_input.data(), grad_input.blas_type(), in_features_,    // ldc
+        utils::compute_type<T>(), CUBLAS_GEMM_DEFAULT
+    ));
+
+    // grad_weights = grad_output^T * input
+    utils::CHECK_CUBLAS_EX(cublasGemmEx(
+        handle_blas,
+        CUBLAS_OP_T, CUBLAS_OP_N,
+        out_features_, in_features_, batch_size,
+        utils::one<T>(),
+        grad_output.data(), grad_output.blas_type(), batch_size,       // lda
+        input.data(), input.blas_type(), in_features_,                 // ldb
+        utils::zero<T>(),
+        grad_weights_.data(), grad_weights_.blas_type(), in_features_, // ldc
+        utils::compute_type<T>(), CUBLAS_GEMM_DEFAULT
+    ));
+
+    // grad_bias = reduce_sum(grad_output, axis=0)
+    cudnnReduceTensorDescriptor_t reduce_desc;
+    utils::CHECK_CUDNN_EX(cudnnCreateReduceTensorDescriptor(&reduce_desc));
+    utils::CHECK_CUDNN_EX(cudnnSetReduceTensorDescriptor(
+        reduce_desc,
+        CUDNN_REDUCE_TENSOR_ADD,
+        utils::dnn_type<T>(),
+        CUDNN_PROPAGATE_NAN,
+        CUDNN_REDUCE_TENSOR_NO_INDICES,
+        CUDNN_32BIT_INDICES
+    ));
+
+    size_t workspace_bytes = 0;
+    utils::CHECK_CUDNN_EX(cudnnGetReductionWorkspaceSize(
+        handle_dnn,
+        reduce_desc,
+        grad_output.desc(),
+        grad_bias_.desc(),
+        &workspace_bytes
+    ));
+
+    void* workspace = nullptr;
+    if (workspace_bytes > 0) {
+        utils::CHECK_CUDA_EX(cudaMalloc(&workspace, workspace_bytes));
+    }
+
+    utils::CHECK_CUDNN_EX(cudnnReduceTensor(
+        handle_dnn,
+        reduce_desc,
+        nullptr, 0,
+        workspace, workspace_bytes,
+        utils::one<T>(),
+        grad_output.desc(), grad_output.data(),
+        utils::zero<T>(),
+        grad_bias_.desc(), grad_bias_.data()
+    ));
+
+    if (workspace) {
+        cudaFree(workspace);
+    }
+
+    cudnnDestroyReduceTensorDescriptor(reduce_desc);
+
+    return grad_input;
+#else
     tensor<T> grad_input({N, in_features_});
 
     // [2] Compute grad_input: dX = dY * W
@@ -161,7 +323,7 @@ tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const t
         fc_backward_weights<T><<<gridDim, blockDim>>>(
             grad_output.data(),
             input.data(),
-            grad_weights_.data(),  // directly write into persistent buffer
+            grad_weights_.data(),
             N,
             in_features_,
             out_features_
@@ -174,18 +336,17 @@ tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const t
         dim3 gridDim((out_features_ + blockDim.x - 1) / blockDim.x);
         fc_backward_bias<T><<<gridDim, blockDim>>>(
             grad_output.data(),
-            grad_bias_.data(),  // directly write into persistent buffer
+            grad_bias_.data(),
             N,
             out_features_
         );
     }
 
     cudaDeviceSynchronize();
-
     utils::THROW_CUDA_EX();
 
-    // [5] Return grad_input to propagate further
     return grad_input;
+#endif
 }
 
 // Explicit template instantiations

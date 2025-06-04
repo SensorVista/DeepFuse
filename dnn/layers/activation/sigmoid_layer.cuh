@@ -16,7 +16,7 @@ public:
     tensor<T> forward(const tensor<T>& input) override;
     tensor<T> backward(const tensor<T>& grad_output, const tensor<T>& input) override;
 
-    const char* name() const override { return "Sigmoid"; }
+    std::string name() const override { return "Sigmoid"; }
 };
 
 template class SigmoidLayer<float>;

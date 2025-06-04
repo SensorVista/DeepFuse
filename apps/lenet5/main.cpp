@@ -58,12 +58,6 @@ void train(
     for (int epoch = 0; epoch < num_epochs; ++epoch) {
         float total_loss = 0;
 
-        // // Learning rate schedule
-        // if (epoch == 10 || epoch == 20) {
-        //     network->set_learning_rate(network->learning_rate() * 0.1f);
-        //     std::cout << "Learning rate reduced to: " << network->learning_rate() << std::endl;
-        // }
-
         // Ensure every epoch gets a new sample order
         std::shuffle(indices.begin(), indices.end(), rng);
 

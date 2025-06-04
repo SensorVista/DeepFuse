@@ -1,5 +1,5 @@
-#include "dnn/losses/cross_entropy.cuh"
-#include "dnn/utils/common.cuh"
+#include "cross_entropy.cuh"
+#include "../utils/common.cuh"
 
 #include <cuda_runtime.h>
 

@@ -8,7 +8,7 @@ namespace dnn {
 template<typename T>
 class FlattenLayer : public Layer<T> {
 public:
-    const char* name() const override { return "Flatten"; }
+    std::string name() const override { return "Flatten"; }
     
     tensor<T> forward(const tensor<T>& input) override;
     tensor<T> backward(const tensor<T>& grad_output, const tensor<T>& input) override;

@@ -1,5 +1,6 @@
 #include "dnn/layers/conv/conv_layer.cuh"
 #include "dnn/utils/common.cuh"
+#include "dnn/core/device.cuh"
 
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
@@ -9,6 +10,8 @@
 
 using namespace std;
 
+#ifndef ENABLE_CUDNN
+// CUDA kernels for non-cuDNN implementation
 template<typename T>
 __global__ void conv2d_forward(
     T* output,           // [batch_size, out_channels, out_height, out_width]
@@ -79,7 +82,7 @@ __global__ void conv2d_backward(
     T* grad_input, 
     const T* grad_output, 
     const T* weight,
-    const uint8_t* connection_mask, // [out_channels, in_channels]
+    const uint8_t* connection_mask,
     int N, 
     int C_in, 
     int C_out,
@@ -128,7 +131,7 @@ __global__ void conv2d_backward(
 template<typename T>
 __global__ void conv_weight_grad_2d(
     const T* input, const T* grad_output, T* grad_weight,
-    const uint8_t* connection_mask, // [out_channels, in_channels]
+    const uint8_t* connection_mask,
     int N, int C_in, int C_out,
     int H_in, int W_in,
     int H_out, int W_out,
@@ -183,8 +186,19 @@ __global__ void conv_bias_grad_2d(
 
     grad_bias[c] = static_cast<T>(sum);
 }
+#endif
 
 namespace dnn {
+
+template<typename T>
+ConvLayer<T>::~ConvLayer() {
+#ifdef ENABLE_CUDNN
+    if (filter_desc_) utils::CHECK_CUDNN_EX(cudnnDestroyFilterDescriptor(filter_desc_));
+    if (conv_desc_) utils::CHECK_CUDNN_EX(cudnnDestroyConvolutionDescriptor(conv_desc_));
+    if (input_desc_) utils::CHECK_CUDNN_EX(cudnnDestroyTensorDescriptor(input_desc_));
+    if (output_desc_) utils::CHECK_CUDNN_EX(cudnnDestroyTensorDescriptor(output_desc_));
+#endif
+}
 
 template<typename T>
 tensor<T> ConvLayer<T>::forward(const tensor<T>& input) {
@@ -231,6 +245,65 @@ tensor<T> ConvLayer<T>::forward(const tensor<T>& input) {
 
     tensor<T> output(output_shape);
 
+#ifdef ENABLE_CUDNN
+    // Set up cuDNN descriptors
+    utils::CHECK_CUDNN_EX(cudnnSetTensor4dDescriptor(input_desc_,
+        CUDNN_TENSOR_NCHW, utils::dnn_type<T>(),
+        batch_size, in_channels_, input_height, input_width));
+
+    utils::CHECK_CUDNN_EX(cudnnSetTensor4dDescriptor(output_desc_,
+        CUDNN_TENSOR_NCHW, utils::dnn_type<T>(),
+        batch_size, out_channels_, output_height, output_width));
+
+    utils::CHECK_CUDNN_EX(cudnnSetFilter4dDescriptor(filter_desc_,
+        utils::dnn_type<T>(), CUDNN_TENSOR_NCHW,
+        out_channels_, in_channels_, kH, kW));
+
+    utils::CHECK_CUDNN_EX(cudnnSetConvolution2dDescriptor(conv_desc_,
+        padding_, padding_, stride_, stride_, 1, 1,
+        CUDNN_CROSS_CORRELATION, utils::dnn_type<T>()));
+
+    // Get the best algorithm for forward convolution
+    cudnnConvolutionFwdAlgo_t fwd_algo;
+    utils::CHECK_CUDNN_EX(cudnnGetConvolutionForwardAlgorithm(
+        Cuda::current().cudnn(),
+        input_desc_, filter_desc_, conv_desc_, output_desc_,
+        CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &fwd_algo));
+
+    // Get workspace size
+    size_t workspace_bytes = 0;
+    utils::CHECK_CUDNN_EX(cudnnGetConvolutionForwardWorkspaceSize(
+        Cuda::current().cudnn(),
+        input_desc_, filter_desc_, conv_desc_, output_desc_,
+        fwd_algo, &workspace_bytes));
+
+    // Allocate workspace if needed
+    void* workspace = nullptr;
+    if (workspace_bytes > 0) {
+        utils::CHECK_CUDA_EX(cudaMalloc(&workspace, workspace_bytes));
+    }
+
+    // Perform forward convolution
+    const float alpha = 1.0f, beta = 0.0f;
+    utils::CHECK_CUDNN_EX(cudnnConvolutionForward(
+        Cuda::current().cudnn(),
+        &alpha, input_desc_, input.data(),
+        filter_desc_, weights_.data(),
+        conv_desc_, fwd_algo,
+        workspace, workspace_bytes,
+        &beta, output_desc_, output.data()));
+
+    // Add bias
+    utils::CHECK_CUDNN_EX(cudnnAddTensor(
+        Cuda::current().cudnn(),
+        &alpha, bias_.desc(), bias_.data(),
+        &alpha, output_desc_, output.data()));
+
+    // Clean up workspace
+    if (workspace) {
+        cudaFree(workspace);
+    }
+#else
     int total = batch_size * out_channels_ * output_height * output_width;
     int threads = 256;
     int blocks = (total + threads - 1) / threads;
@@ -244,16 +317,17 @@ tensor<T> ConvLayer<T>::forward(const tensor<T>& input) {
         batch_size,
         in_channels_,
         out_channels_,
-        input_height,   // input height
-        input_width,    // input width
-        output_height,  // output height
-        output_width,   // output width
-        kH,             // kernel size
+        input_height,
+        input_width,
+        output_height,
+        output_width,
+        kH,
         stride_,
         padding_
     );
 
-    utils::THROW_CUDA_EX(); 
+    utils::THROW_CUDA_EX();
+#endif
 
     return output;
 }
@@ -270,42 +344,106 @@ tensor<T> ConvLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& 
     const int K = kernel_size_[0];
 
     tensor<T> grad_input(input.shape());
-    grad_input.zero(); // Initialize to zero
+    grad_input.zero();
 
+#ifdef ENABLE_CUDNN
+    auto& cuda = Cuda::current();
+    auto handle_dnn = cuda.cudnn();
+
+    // Get the best algorithms for backward passes
+    cudnnConvolutionBwdDataAlgo_t bwd_data_algo;
+    cudnnConvolutionBwdFilterAlgo_t bwd_filter_algo;
+
+    utils::CHECK_CUDNN_EX(cudnnGetConvolutionBackwardDataAlgorithm(
+        handle_dnn, filter_desc_, grad_output.desc(), conv_desc_, grad_input.desc(),
+        CUDNN_CONVOLUTION_BWD_DATA_PREFER_FASTEST, 0, &bwd_data_algo));
+
+    utils::CHECK_CUDNN_EX(cudnnGetConvolutionBackwardFilterAlgorithm(
+        handle_dnn, input.desc(), grad_output.desc(), conv_desc_, filter_desc_,
+        CUDNN_CONVOLUTION_BWD_FILTER_PREFER_FASTEST, 0, &bwd_filter_algo));
+
+    // Get workspace sizes
+    size_t workspace_data_bytes = 0, workspace_filter_bytes = 0;
+    utils::CHECK_CUDNN_EX(cudnnGetConvolutionBackwardDataWorkspaceSize(
+        handle_dnn, filter_desc_, grad_output.desc(), conv_desc_, grad_input.desc(),
+        bwd_data_algo, &workspace_data_bytes));
+
+    utils::CHECK_CUDNN_EX(cudnnGetConvolutionBackwardFilterWorkspaceSize(
+        handle_dnn, input.desc(), grad_output.desc(), conv_desc_, filter_desc_,
+        bwd_filter_algo, &workspace_filter_bytes));
+
+    // Allocate workspace
+    size_t workspace_bytes = std::max(workspace_data_bytes, workspace_filter_bytes);
+    void* workspace = nullptr;
+    if (workspace_bytes > 0) {
+        utils::CHECK_CUDA_EX(cudaMalloc(&workspace, workspace_bytes));
+    }
+
+    const float alpha = 1.0f, beta = 0.0f;
+
+    // Backward data
+    utils::CHECK_CUDNN_EX(cudnnConvolutionBackwardData(
+        handle_dnn,
+        &alpha, filter_desc_, weights_.data(),
+        grad_output.desc(), grad_output.data(),
+        conv_desc_, bwd_data_algo,
+        workspace, workspace_bytes,
+        &beta, grad_input.desc(), grad_input.data()));
+
+    // Backward filter
+    utils::CHECK_CUDNN_EX(cudnnConvolutionBackwardFilter(
+        handle_dnn,
+        &alpha, input.desc(), input.data(),
+        grad_output.desc(), grad_output.data(),
+        conv_desc_, bwd_filter_algo,
+        workspace, workspace_bytes,
+        &beta, grad_weights_.desc(), grad_weights_.data()));
+
+    // Backward bias
+    utils::CHECK_CUDNN_EX(cudnnConvolutionBackwardBias(
+        handle_dnn,
+        &alpha, grad_output.desc(), grad_output.data(),
+        &beta, grad_bias_.desc(), grad_bias_.data()));
+
+    // Clean up workspace
+    if (workspace) {
+        cudaFree(workspace);
+    }
+#else
     // Grad input
     {
         int total = N * C_in * H_in * W_in;
         int threads = 256;
         int blocks = (total + threads - 1) / threads;
-        conv2d_backward<T><<<blocks, threads>>> (
+        conv2d_backward<T><<<blocks, threads>>>(
             grad_input.data(), grad_output.data(), weights_.data(),
             use_sparse_connectivity_ ? connection_mask_dev_.data() : nullptr,
             N, C_in, C_out, H_in, W_in, H_out, W_out, K, stride_, padding_);
     }
 
-    // Grad weights (directly into persistent buffer)
+    // Grad weights
     {
         int total = C_out * C_in * K * K;
         int threads = 256;
         int blocks = (total + threads - 1) / threads;
-        conv_weight_grad_2d<T><<<blocks, threads>>> (
+        conv_weight_grad_2d<T><<<blocks, threads>>>(
             input.data(), grad_output.data(), grad_weights_.data(),
             use_sparse_connectivity_ ? connection_mask_dev_.data() : nullptr,
             N, C_in, C_out, H_in, W_in, H_out, W_out, K, stride_, padding_);
     }
 
-    // Grad bias (directly into persistent buffer)
+    // Grad bias
     {
         int threads = 256;
         int blocks = (C_out + threads - 1) / threads;
-        conv_bias_grad_2d<T><<<blocks, threads>>> (
+        conv_bias_grad_2d<T><<<blocks, threads>>>(
             grad_output.data(), grad_bias_.data(),
             N, C_out, H_out, W_out);
     }
 
     cudaDeviceSynchronize();
-
     utils::THROW_CUDA_EX();
+#endif
 
     return grad_input;
 }

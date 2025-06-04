@@ -37,3 +37,8 @@ target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
 
 # Link core DNN library
 target_link_libraries(${TARGET_NAME} PRIVATE dnn)
+# Enable cuDNN
+if(DEFINED USE_CUDNN AND USE_CUDNN)
+    target_compile_definitions(dnn PUBLIC ENABLE_CUDNN)
+endif()
+

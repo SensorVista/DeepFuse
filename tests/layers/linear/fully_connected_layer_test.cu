@@ -88,7 +88,7 @@ TEST_F(FullyConnectedLayerTest, ConstructorAndInitialization) {
     EXPECT_EQ(params[0]->shape()[1], in_features);
     
     // Check bias shape
-    EXPECT_EQ(params[1]->shape()[0], out_features);
+    EXPECT_EQ(params[1]->shape()[1], out_features);
 }
 
 TEST_F(FullyConnectedLayerTest, ForwardPass) {
@@ -188,7 +188,7 @@ TEST_F(FullyConnectedLayerTest, BackwardPass) {
     EXPECT_EQ(grads[0]->shape()[1], in_features);
     
     // Verify bias gradients shape
-    EXPECT_EQ(grads[1]->shape()[0], out_features);
+    EXPECT_EQ(grads[1]->shape()[1], out_features);
 }
 
 TEST_F(FullyConnectedLayerTest, DifferentDimensions) {
