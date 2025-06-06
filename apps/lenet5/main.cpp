@@ -1,13 +1,13 @@
+#include <dnn/core/cuda.cuh>
 #include <dnn/models/lenet5.cuh>
-#include <dnn/utils/mnist_loader.cuh>
 #include <dnn/utils/common.cuh>
-#include <dnn/core/device.cuh>
+#include <dnn/utils/mnist_loader.cuh>
 
 #include <iostream>
 #include <filesystem>
 #include <numeric>
-#include <vector>
 #include <random>
+#include <vector>
 
 void print_usage(const char* program_name) {
     // Extract just the filename without path and extension
@@ -183,8 +183,6 @@ int main(int argc, char* argv[]) {
 
         // Create LeNet-5 network with float precision
         dnn::LeNet5<float> network;
-        network.set_loss(std::make_unique<dnn::CrossEntropyLoss<float>>());
-        network.set_optimizer(std::make_unique<dnn::SGDOptimizer<float>>(0.01f, 0.9f, 0.0f));
 
         // Begin training
         const int num_epochs = 10;

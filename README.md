@@ -1,9 +1,11 @@
 # CUDA DNN Framework: Scalable Transformers on Commodity GPUs
 
+C++ 17 CUDA framework. Support next-gen Blackwell architecture and legacy CUDA devices. Supports e5m2 and e4m3 8-bit 
+quantization. FP32, FP16 and BF16. Advanced support for device management, tensor ops,  cuBLAS and cuDNN.
+
 This project demonstrates CUDA functionality and provides a advanced test environment for CUDA operations. 
-Helps breaks the VRAM ceiling, cuts framework overhead, and makes billion-parameter models viable on RTX 4090-class hardware.
-Azure, MetaAI, GoogleDeepMind, xAI, and DeepSeek scaled with big budgets. We scale with efficiency.
-If you're serious about building the next-gen AGI, this is where it starts.
+Helps breaks the VRAM ceiling, cuts framework overhead, and makes billion-parameter models viable on COTS hardware.
+Azure, MetaAI and DeepMind scaled with big budgets. We scale with efficiency.
 
 ## Features
 

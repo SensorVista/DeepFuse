@@ -1,11 +1,11 @@
+#include <dnn/core/cuda.cuh>
 #include <dnn/models/perceptron.cuh>
-#include <dnn/core/device.cuh>
 
 #include <iostream>
 #include <filesystem>
 #include <numeric>
-#include <vector>
 #include <random>
+#include <vector>
 
 int main() {
     try {

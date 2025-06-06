@@ -1,4 +1,5 @@
 #pragma once
+
 #include "dnn/core/layer.cuh"
 #include "dnn/core/tensor.cuh"
 

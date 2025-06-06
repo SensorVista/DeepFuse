@@ -3,7 +3,7 @@
 #include "../core/layer.cuh"
 #include "../losses/loss.cuh"
 #include "../optimizers/optimizer.cuh"
-#include "inference_model.cuh"
+#include "model.cuh"
 #include "../utils/common.cuh"
 
 #include <vector>
@@ -18,9 +18,9 @@ namespace dnn {
 // Adds support loss function, optimizers to the model and training methods
 
 template<typename T>
-class TrainingModel : public InferenceModel<T> {
+class TrainingModel : public Model<T> {
 public:
-    explicit TrainingModel(bool enable_training = false) : InferenceModel<T>() {
+    explicit TrainingModel(bool enable_training = false) : Model<T>() {
     }
 
     virtual ~TrainingModel() = default;

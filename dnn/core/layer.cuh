@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tensor.cuh"
+#include "dnn/core/tensor.cuh"
 
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>

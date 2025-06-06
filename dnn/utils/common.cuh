@@ -128,6 +128,11 @@ template<typename T>
 const cublasComputeType_t compute_type();
 #endif
 
+// Infinity support
+template<typename T>
+__device__ __host__ inline T neg_infinity();
+template<typename T>
+__device__ __host__ inline T infinity();
 
 // Pad 2D input tensor to output tensor
 inline void pad2d(

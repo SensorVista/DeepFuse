@@ -83,6 +83,7 @@ TEST_F(ActivationLayerTest, ForwardPass) {
         ActivationLayer<float> layer(ActivationType::ReLU);
         tensor<float> output = layer.forward(input);
         std::vector<float> host_output(output.size());
+        cudaDeviceSynchronize();
         output.download(host_output.data());
         EXPECT_FLOAT_EQ(host_output[0], 0.0f);  // -2.0 -> 0.0
         EXPECT_FLOAT_EQ(host_output[1], 0.0f);  // -1.0 -> 0.0
@@ -96,6 +97,7 @@ TEST_F(ActivationLayerTest, ForwardPass) {
         ActivationLayer<float> layer(ActivationType::Sigmoid);
         tensor<float> output = layer.forward(input);
         std::vector<float> host_output(output.size());
+        cudaDeviceSynchronize();
         output.download(host_output.data());
         for (size_t i = 0; i < host_input.size(); ++i) {
             EXPECT_NEAR(host_output[i], sigmoid(host_input[i]), 1e-5);
@@ -107,6 +109,7 @@ TEST_F(ActivationLayerTest, ForwardPass) {
         ActivationLayer<float> layer(ActivationType::Tanh);
         tensor<float> output = layer.forward(input);
         std::vector<float> host_output(output.size());
+        cudaDeviceSynchronize();
         output.download(host_output.data());
         for (size_t i = 0; i < host_input.size(); ++i) {
             EXPECT_NEAR(host_output[i], tanh_scaled(host_input[i]), 1e-5);
@@ -128,6 +131,7 @@ TEST_F(ActivationLayerTest, BackwardPass) {
         ActivationLayer<float> layer(ActivationType::ReLU);
         tensor<float> grad_input = layer.backward(grad_output, input);
         std::vector<float> host_grad_input(grad_input.size());
+        cudaDeviceSynchronize();
         grad_input.download(host_grad_input.data());
         EXPECT_FLOAT_EQ(host_grad_input[0], 0.0f);  // -2.0 -> 0.0
         EXPECT_FLOAT_EQ(host_grad_input[1], 0.0f);  // -1.0 -> 0.0
@@ -141,6 +145,7 @@ TEST_F(ActivationLayerTest, BackwardPass) {
         ActivationLayer<float> layer(ActivationType::Sigmoid);
         tensor<float> grad_input = layer.backward(grad_output, input);
         std::vector<float> host_grad_input(grad_input.size());
+        cudaDeviceSynchronize();
         grad_input.download(host_grad_input.data());
         for (size_t i = 0; i < host_input.size(); ++i) {
             EXPECT_NEAR(host_grad_input[i], host_grad[i] * sigmoid_derivative(host_input[i]), 1e-5);
@@ -152,6 +157,7 @@ TEST_F(ActivationLayerTest, BackwardPass) {
         ActivationLayer<float> layer(ActivationType::Tanh);
         tensor<float> grad_input = layer.backward(grad_output, input);
         std::vector<float> host_grad_input(grad_input.size());
+        cudaDeviceSynchronize();
         grad_input.download(host_grad_input.data());
         for (size_t i = 0; i < host_input.size(); ++i) {
             EXPECT_NEAR(host_grad_input[i], host_grad[i] * tanh_derivative(host_input[i]), 1e-5);

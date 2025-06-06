@@ -1,14 +1,14 @@
-#include <dnn/utils/cifar10_loader.cuh>
+#include <dnn/core/cuda.cuh>
 #include <dnn/losses/cross_entropy.cuh>
 #include <dnn/optimizers/sgd_optimizer.cuh>
+#include <dnn/utils/cifar10_loader.cuh>
 #include <dnn/utils/common.cuh>
-#include <dnn/core/device.cuh>
 
 #include <iostream>
 #include <filesystem>
 #include <numeric>
-#include <vector>
 #include <random>
+#include <vector>
 
 void print_usage(const char* program_name) {
     std::string name = program_name;

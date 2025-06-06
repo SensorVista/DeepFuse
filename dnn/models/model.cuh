@@ -12,10 +12,10 @@ namespace dnn {
 // Defines the forward pass through the network
 
 template<typename T>
-class InferenceModel {
+class Model {
 public:
-    explicit InferenceModel() = default;
-    virtual ~InferenceModel() = default;
+    explicit Model() = default;
+    virtual ~Model() = default;
 
     // Forward pass through the network
     virtual tensor<T> forward(const tensor<T>& input) {
