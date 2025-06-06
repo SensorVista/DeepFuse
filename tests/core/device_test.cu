@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
-#include "dnn/core/device.cuh"
+
+#include <dnn/core/device.cuh>
+
 #include <sstream>
 
 namespace dnn {

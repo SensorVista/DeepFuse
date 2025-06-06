@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
-#include "dnn/losses/binary_cross_entropy.cuh"
+
+#include <dnn/losses/binary_cross_entropy.cuh>
+
 #include <vector>
 #include <cmath>
 

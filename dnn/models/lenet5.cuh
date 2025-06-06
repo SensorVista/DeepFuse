@@ -1,14 +1,14 @@
 #pragma once
 
-#include "training_model.cuh"
-#include "../layers/conv/conv_layer.cuh"
-#include "../layers/linear/fully_connected_layer.cuh"
-//#include "../layers/activation/tanh_layer.cuh"
-#include "../layers/activation/activation_layer.cuh"
-#include "../layers/pooling/pooling_layer.cuh"
-#include "../layers/reshape/flatten_layer.cuh"
-#include "../losses/cross_entropy.cuh"
-#include "../optimizers/sgd_optimizer.cuh"
+#include <dnn/layers/conv_layer.cuh>
+#include <dnn/layers/fully_connected_layer.cuh>
+#include <dnn/layers/activation_layer.cuh>
+#include <dnn/layers/pooling_layer.cuh>
+#include <dnn/layers/flatten_layer.cuh>
+#include <dnn/losses/cross_entropy.cuh>
+#include <dnn/models/training_model.cuh>
+#include <dnn/optimizers/sgd_optimizer.cuh>
+
 #include <memory>
 
 namespace dnn {

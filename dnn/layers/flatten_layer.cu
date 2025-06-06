@@ -1,5 +1,5 @@
 #include "flatten_layer.cuh"
-#include "../../utils/common.cuh"
+#include "../utils/common.cuh"
 
 #include <cuda_runtime.h>
 

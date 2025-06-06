@@ -1,6 +1,7 @@
-#include "dnn/layers/conv/conv_layer.cuh"
-#include "dnn/utils/common.cuh"
-#include "dnn/core/device.cuh"
+#include "conv_layer.cuh"
+#include "../utils/common.cuh"
+#include "../core/device.cuh"
+#include "../core/tensor.cuh"
 
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
@@ -191,6 +192,44 @@ __global__ void conv_bias_grad_2d(
 namespace dnn {
 
 template<typename T>
+ConvLayer<T>::ConvLayer(int in_channels, int out_channels, const std::vector<int>& kernel_size, int stride, int padding, const std::vector<std::vector<bool>>& connection_table /* = {} */)
+    : LayerWeightBias<T>(
+        tensor<T>({out_channels, in_channels, kernel_size[0], kernel_size[1]}),
+        tensor<T>({1, out_channels, 1, 1}),
+        tensor<T>({out_channels, in_channels, kernel_size[0], kernel_size[1]}),
+        tensor<T>({1, out_channels, 1, 1})
+    )
+    , in_channels_(in_channels)
+    , out_channels_(out_channels)
+    , kernel_size_(kernel_size)
+    , stride_(stride)
+    , padding_(padding)
+    , connection_mask_dev_({out_channels, in_channels})
+    , use_sparse_connectivity_(connection_table.size() > 0)
+#ifdef ENABLE_CUDNN
+    , filter_desc_(nullptr)
+    , conv_desc_(nullptr)
+    , input_desc_(nullptr)
+    , output_desc_(nullptr)
+#endif
+{
+    if (use_sparse_connectivity_) {
+        if (connection_table.size() != out_channels || connection_table[0].size() != in_channels) {
+            throw std::runtime_error("Connection table dimensions do not match in/out channels.");
+        }
+        std::vector<uint8_t> host_connection_mask(out_channels * in_channels);
+        for (int i = 0; i < out_channels; ++i) {
+            for (int j = 0; j < in_channels; ++j) {
+                host_connection_mask[i * in_channels + j] = connection_table[i][j] ? 1 : 0;
+            }
+        }
+        connection_mask_dev_.upload(host_connection_mask.data());
+    }
+    
+    initialize_weights();
+}
+
+template<typename T>
 ConvLayer<T>::~ConvLayer() {
 #ifdef ENABLE_CUDNN
     if (filter_desc_) utils::CHECK_CUDNN_EX(cudnnDestroyFilterDescriptor(filter_desc_));
@@ -288,7 +327,7 @@ tensor<T> ConvLayer<T>::forward(const tensor<T>& input) {
     utils::CHECK_CUDNN_EX(cudnnConvolutionForward(
         Cuda::current().cudnn(),
         &alpha, input_desc_, input.data(),
-        filter_desc_, weights_.data(),
+        filter_desc_, this->weights_.data(),
         conv_desc_, fwd_algo,
         workspace, workspace_bytes,
         &beta, output_desc_, output.data()));
@@ -296,7 +335,7 @@ tensor<T> ConvLayer<T>::forward(const tensor<T>& input) {
     // Add bias
     utils::CHECK_CUDNN_EX(cudnnAddTensor(
         Cuda::current().cudnn(),
-        &alpha, bias_.desc(), bias_.data(),
+        &alpha, this->bias_.desc(), this->bias_.data(),
         &alpha, output_desc_, output.data()));
 
     // Clean up workspace
@@ -311,8 +350,8 @@ tensor<T> ConvLayer<T>::forward(const tensor<T>& input) {
     conv2d_forward<T><<<blocks, threads>>>(
         output.data(),
         input.data(),
-        weights_.data(),
-        bias_.data(),
+        this->weights_.data(),
+        this->bias_.data(),
         use_sparse_connectivity_ ? connection_mask_dev_.data() : nullptr,
         batch_size,
         in_channels_,
@@ -384,7 +423,7 @@ tensor<T> ConvLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& 
     // Backward data
     utils::CHECK_CUDNN_EX(cudnnConvolutionBackwardData(
         handle_dnn,
-        &alpha, filter_desc_, weights_.data(),
+        &alpha, filter_desc_, this->weights_.data(),
         grad_output.desc(), grad_output.data(),
         conv_desc_, bwd_data_algo,
         workspace, workspace_bytes,
@@ -397,13 +436,13 @@ tensor<T> ConvLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& 
         grad_output.desc(), grad_output.data(),
         conv_desc_, bwd_filter_algo,
         workspace, workspace_bytes,
-        &beta, grad_weights_.desc(), grad_weights_.data()));
+        &beta, this->grad_weights_.desc(), this->grad_weights_.data()));
 
     // Backward bias
     utils::CHECK_CUDNN_EX(cudnnConvolutionBackwardBias(
         handle_dnn,
         &alpha, grad_output.desc(), grad_output.data(),
-        &beta, grad_bias_.desc(), grad_bias_.data()));
+        &beta, this->grad_bias_.desc(), this->grad_bias_.data()));
 
     // Clean up workspace
     if (workspace) {
@@ -416,7 +455,7 @@ tensor<T> ConvLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& 
         int threads = 256;
         int blocks = (total + threads - 1) / threads;
         conv2d_backward<T><<<blocks, threads>>>(
-            grad_input.data(), grad_output.data(), weights_.data(),
+            grad_input.data(), grad_output.data(), this->weights_.data(),
             use_sparse_connectivity_ ? connection_mask_dev_.data() : nullptr,
             N, C_in, C_out, H_in, W_in, H_out, W_out, K, stride_, padding_);
     }
@@ -427,7 +466,7 @@ tensor<T> ConvLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& 
         int threads = 256;
         int blocks = (total + threads - 1) / threads;
         conv_weight_grad_2d<T><<<blocks, threads>>>(
-            input.data(), grad_output.data(), grad_weights_.data(),
+            input.data(), grad_output.data(), this->grad_weights_.data(),
             use_sparse_connectivity_ ? connection_mask_dev_.data() : nullptr,
             N, C_in, C_out, H_in, W_in, H_out, W_out, K, stride_, padding_);
     }
@@ -437,7 +476,7 @@ tensor<T> ConvLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& 
         int threads = 256;
         int blocks = (C_out + threads - 1) / threads;
         conv_bias_grad_2d<T><<<blocks, threads>>>(
-            grad_output.data(), grad_bias_.data(),
+            grad_output.data(), this->grad_bias_.data(),
             N, C_out, H_out, W_out);
     }
 
@@ -447,6 +486,25 @@ tensor<T> ConvLayer<T>::backward(const tensor<T>& grad_output, const tensor<T>& 
 
     return grad_input;
 }
+
+template<typename T>
+void ConvLayer<T>::initialize_weights() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    // Xavier/Glorot initialization
+    float limit = std::sqrt(6.0f / (in_channels_ * kernel_size_[0] * kernel_size_[1] + out_channels_ * kernel_size_[0] * kernel_size_[1])); // Adjusted for Glorot uniform
+    std::uniform_real_distribution<T> dist(-limit, limit);
+
+    std::vector<T> host_weights(this->weights_.size());
+    std::vector<T> host_bias(this->bias_.size());
+    for (int i = 0; i < host_weights.size(); ++i) {
+        host_weights[i] = dist(gen);
+    }
+    std::fill(host_bias.begin(), host_bias.end(), static_cast<T>(0.0f));
+    this->weights_.upload(host_weights.data());
+    this->bias_.upload(host_bias.data());
+}
+
 
 // Explicit template instantiations
 template class ConvLayer<float>;  // FP32

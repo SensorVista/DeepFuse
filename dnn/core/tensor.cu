@@ -248,4 +248,19 @@ std::string tensor<T>::to_string() const {
     return oss.str();
 }
 
+// Forward declarations for supported template types
+template class tensor<float>;  // FP32
+template class tensor<__half>; // FP16
+template class tensor<__nv_bfloat16>; // BF16
+
+#ifdef __CUDA_FP8_TYPES_EXIST__
+// Use FP8 Tensor Core Hopper+ (SM 9.0+)
+template class tensor<__nv_fp8x4_e5m2>;
+template class tensor<__nv_fp8x4_e4m3>;
+#endif
+
+// general purpose (or int8 emulation if needed)
+template class tensor<int8_t>;
+template class tensor<uint8_t>;
+
 } // namespace dnn

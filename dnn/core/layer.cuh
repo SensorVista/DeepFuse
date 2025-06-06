@@ -43,4 +43,38 @@ template class Layer<float>;  // FP32
 // template class Layer<__half>; // FP16
 // template class Layer<__nv_bfloat16>; // BF16
 
+
+template<typename T>
+class LayerWeightBias : public Layer<T> {
+public:
+    LayerWeightBias(tensor<T>&& weights, tensor<T>&& bias, tensor<T>&& grad_weights, tensor<T>&& grad_bias)
+        : weights_(std::move(weights)), bias_(std::move(bias)), grad_weights_(std::move(grad_weights)), grad_bias_(std::move(grad_bias)) {}
+    virtual ~LayerWeightBias() = default;
+
+    // Get layer weights
+    virtual tensor<T>* weights() { return &weights_; };
+
+    // Get layer bias
+    virtual tensor<T>* bias() { return &bias_; };
+
+    // Get layer weights
+    virtual tensor<T>* grad_weights() { return &grad_weights_; };
+
+    // Get layer bias
+    virtual tensor<T>* grad_bias() { return &grad_bias_; }; 
+
+    // Initialize weights and bias
+    virtual void initialize_weights() = 0;
+
+    std::vector<tensor<T>*> parameters() override { return {&weights_, &bias_}; }
+    std::vector<tensor<T>*> gradients() override { return {&grad_weights_, &grad_bias_}; }
+
+protected:
+    tensor<T> weights_;
+    tensor<T> bias_;
+    tensor<T> grad_weights_;
+    tensor<T> grad_bias_;
+
+};
+
 } // namespace dnn 

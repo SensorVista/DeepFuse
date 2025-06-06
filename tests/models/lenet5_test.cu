@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
-#include "dnn/models/lenet5.cuh"
+
+#include <dnn/models/lenet5.cuh>
+
 #include <vector>
 #include <random>
 

@@ -28,7 +28,7 @@ enum class ActivationType {
 template<typename T>
 class ActivationLayer : public Layer<T> {
 public:
-    explicit ActivationLayer(ActivationType type);
+    ActivationLayer(ActivationType type);
     ~ActivationLayer();
 
     tensor<T> forward(const tensor<T>& input) override;
@@ -41,8 +41,5 @@ private:
     cudnnActivationDescriptor_t act_desc_;
 #endif
 };
-
-// Explicit template instantiations
-template class ActivationLayer<float>;
 
 } // namespace dnn 

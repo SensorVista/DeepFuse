@@ -27,6 +27,7 @@ namespace dnn {
 
 Cuda::Cuda(int device_id /* = 0 */) : id_(device_id) {
     utils::CHECK_CUDA_EX(cudaSetDevice(id_));
+    utils::CHECK_CUDA_EX(cudaFree(0));  // Force context creation
 
 #ifdef ENABLE_CUDNN
     utils::CHECK_CUDNN_EX(cudnnCreate(&handle_));

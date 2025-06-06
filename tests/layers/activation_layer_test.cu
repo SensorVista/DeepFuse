@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
-#include "dnn/layers/activation/activation_layer.cuh"
+
+#include <dnn/core/cuda.cuh>
+#include <dnn/layers/activation_layer.cuh>
+
 #include <vector>
 #include <cmath>
 
@@ -8,12 +11,17 @@ namespace test {
 
 class ActivationLayerTest : public ::testing::Test {
 protected:
+    std::unique_ptr<Cuda> cuda_;
+
     void SetUp() override {
-        // Set up any common test resources
+        // Always create a new context on this thread
+        cuda_ = std::make_unique<Cuda>(0);
+        cudaDeviceSynchronize();
     }
 
     void TearDown() override {
-        // Clean up any common test resources
+        cudaDeviceSynchronize();
+        cuda_.reset();
     }
 
     // Helper function to compute sigmoid

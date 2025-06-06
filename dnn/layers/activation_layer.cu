@@ -1,6 +1,7 @@
 #include "activation_layer.cuh"
-#include "../../utils/common.cuh"
-#include "../../core/device.cuh"
+
+#include "../utils/common.cuh"
+#include "../core/device.cuh"
 
 #include <cuda_runtime.h>
 #include <stdexcept>
@@ -181,5 +182,8 @@ tensor<T> ActivationLayer<T>::backward(const tensor<T>& grad_output, const tenso
 
     return grad_input;
 }
+
+// Explicit template instantiations
+template class ActivationLayer<float>;
 
 } // namespace dnn 

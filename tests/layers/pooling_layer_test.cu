@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
-#include "dnn/layers/pooling/pooling_layer.cuh"
+
+#include <dnn/layers/pooling_layer.cuh>
+
 #include <vector>
 #include <cmath>
 #include <random>

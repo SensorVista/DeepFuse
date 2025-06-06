@@ -1,6 +1,6 @@
 #include "pooling_layer.cuh"
-#include "../../utils/common.cuh"
-#include "../../core/device.cuh"
+#include "../utils/common.cuh"
+#include "../core/device.cuh"
 
 #include <cuda_runtime.h>
 

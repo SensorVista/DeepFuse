@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
-#include "dnn/core/tensor.cuh"
+
+#include <dnn/core/tensor.cuh>
+
 #include <vector>
 #include <random>
 

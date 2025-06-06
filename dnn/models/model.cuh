@@ -50,6 +50,14 @@ public:
         // Implementation for loading model weights
     }
 
+    // Add a layer to the model
+    void add_layer(std::unique_ptr<Layer<T>> layer) {
+        layers_.push_back(std::move(layer));
+    }
+
+    // Get layers
+    const std::vector<std::unique_ptr<Layer<T>>>& layers() const { return layers_; }
+
 protected:
     std::vector<std::unique_ptr<Layer<T>>> layers_;
     T current_loss_ = 0;

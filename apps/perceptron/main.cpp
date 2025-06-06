@@ -48,8 +48,6 @@ int main() {
 
         // Create Perceptron network
         dnn::Perceptron<float> network(input_dim, 4, output_dim);
-        network.set_loss(std::make_unique<dnn::BinaryCrossEntropyLoss<float>>());
-        network.set_optimizer(std::make_unique<dnn::SGDOptimizer<float>>(0.001f, 0.9f));
 
         // Training parameters
         int num_epochs = 1000;

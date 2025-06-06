@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
-#include "dnn/core/cuda.cuh"
+
+#include <dnn/core/cuda.cuh>
+
 #include <sstream>
 #include <thread>
 
@@ -8,12 +10,17 @@ namespace test {
 
 class CudaTest : public ::testing::Test {
 protected:
+    std::unique_ptr<Cuda> cuda_;
+
     void SetUp() override {
-        // Set up any common test resources
+        // Always create a new context on this thread
+        cuda_ = std::make_unique<Cuda>(0);
+        cudaDeviceSynchronize();
     }
 
     void TearDown() override {
-        // Clean up any common test resources
+        cudaDeviceSynchronize();
+        cuda_.reset();
     }
 };
 
@@ -36,6 +43,11 @@ TEST_F(CudaTest, Constructor) {
 
     // Test constructor with invalid device ID
     EXPECT_THROW(Cuda cuda(device_count), std::runtime_error);
+
+    // Reset device state for rest of test suite
+    cudaSetDevice(0);
+    cudaDeviceSynchronize();
+    Cuda::set_stream(nullptr);    
 }
 
 TEST_F(CudaTest, CurrentInstance) {

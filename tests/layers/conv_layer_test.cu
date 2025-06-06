@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
-#include "dnn/layers/conv/conv_layer.cuh"
+
+#include <dnn/core/cuda.cuh>
+#include <dnn/layers/conv_layer.cuh>
+
 #include <vector>
 #include <cmath>
 #include <random>
@@ -9,12 +12,17 @@ namespace test {
 
 class ConvLayerTest : public ::testing::Test {
 protected:
+    std::unique_ptr<Cuda> cuda_;
+
     void SetUp() override {
-        // Set up any common test resources
+        // Always create a new context on this thread
+        cuda_ = std::make_unique<Cuda>(0);
+        cudaDeviceSynchronize();
     }
 
     void TearDown() override {
-        // Clean up any common test resources
+        cudaDeviceSynchronize();
+        cuda_.reset();
     }
 
     // Helper function to compute expected output size

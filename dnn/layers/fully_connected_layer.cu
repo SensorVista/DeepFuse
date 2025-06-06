@@ -1,6 +1,6 @@
 #include "fully_connected_layer.cuh"
-#include "../../utils/common.cuh"
-#include "../../core/device.cuh"
+#include "../utils/common.cuh"
+#include "../core/device.cuh"
 
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
@@ -115,12 +115,14 @@ __global__ void fc_backward_bias(
 
 template<typename T>
 FullyConnectedLayer<T>::FullyConnectedLayer(int in_features, int out_features)
-    : in_features_(in_features)
+    : LayerWeightBias<T>(
+        tensor<T>({ out_features, in_features }),
+        tensor<T>({ 1, out_features, 1, 1 }),
+        tensor<T>({ out_features, in_features }),
+        tensor<T>({ 1, out_features, 1, 1 })
+    )
+    , in_features_(in_features)
     , out_features_(out_features)
-    , weights_({ out_features, in_features })
-    , bias_({ 1, out_features, 1, 1 })               // Match NCHW format
-    , grad_weights_({ out_features, in_features })
-    , grad_bias_({ 1, out_features, 1, 1 })          // Match NCHW format
 #ifdef ENABLE_CUDNN
     , filter_desc_(nullptr)
     , conv_desc_(nullptr)
@@ -184,13 +186,13 @@ tensor<T> FullyConnectedLayer<T>::forward(const tensor<T>& input) {
     // Forward pass using cuDNN convolution
     utils::CHECK_CUDNN_EX(cudnnConvolutionForward(handle,
         &alpha, input_desc_, input.data(),
-        filter_desc_, weights_.data(),
+        filter_desc_, this->weights_.data(),
         conv_desc_, CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM,
         nullptr, 0, &beta, output_desc_, output.data()));
 
     // Add bias
     utils::CHECK_CUDNN_EX(cudnnAddTensor(handle,
-        &alpha, bias_.desc(), bias_.data(),
+        &alpha, this->bias_.desc(), this->bias_.data(),
         &alpha, output_desc_, output.data()));
 
     return output;
@@ -202,8 +204,8 @@ tensor<T> FullyConnectedLayer<T>::forward(const tensor<T>& input) {
 
     fully_connected_forward_kernel<T><<<gridDim, blockDim>>>(
         input.data(),
-        weights_.data(),
-        bias_.data(),
+        this->weights_.data(),
+        this->bias_.data(),
         output.data(),
         N, in_features_, out_features_
     );
@@ -232,7 +234,7 @@ tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const t
         CUBLAS_OP_T, CUBLAS_OP_N,  // A^T * B
         in_features_, batch_size, out_features_,
         utils::one<T>(),
-        weights_.data(), weights_.blas_type(), in_features_,       // lda
+        this->weights_.data(), this->weights_.blas_type(), in_features_,       // lda
         grad_output.data(), grad_output.blas_type(), out_features_, // ldb
         utils::zero<T>(),
         grad_input.data(), grad_input.blas_type(), in_features_,    // ldc
@@ -248,7 +250,7 @@ tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const t
         grad_output.data(), grad_output.blas_type(), batch_size,       // lda
         input.data(), input.blas_type(), in_features_,                 // ldb
         utils::zero<T>(),
-        grad_weights_.data(), grad_weights_.blas_type(), in_features_, // ldc
+        this->grad_weights_.data(), this->grad_weights_.blas_type(), in_features_, // ldc
         utils::compute_type<T>(), CUBLAS_GEMM_DEFAULT
     ));
 
@@ -269,7 +271,7 @@ tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const t
         handle_dnn,
         reduce_desc,
         grad_output.desc(),
-        grad_bias_.desc(),
+        this->grad_bias_.desc(),
         &workspace_bytes
     ));
 
@@ -286,7 +288,7 @@ tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const t
         utils::one<T>(),
         grad_output.desc(), grad_output.data(),
         utils::zero<T>(),
-        grad_bias_.desc(), grad_bias_.data()
+        this->grad_bias_.desc(), this->grad_bias_.data()
     ));
 
     if (workspace) {
@@ -305,7 +307,7 @@ tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const t
         dim3 gridDim((in_features_ + blockDim.x - 1) / blockDim.x, N);
         fc_backward_input<T><<<gridDim, blockDim>>>(
             grad_output.data(),
-            weights_.data(),
+            this->weights_.data(),
             grad_input.data(),
             N,
             in_features_,
@@ -323,7 +325,7 @@ tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const t
         fc_backward_weights<T><<<gridDim, blockDim>>>(
             grad_output.data(),
             input.data(),
-            grad_weights_.data(),
+            this->grad_weights_.data(),
             N,
             in_features_,
             out_features_
@@ -336,7 +338,7 @@ tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const t
         dim3 gridDim((out_features_ + blockDim.x - 1) / blockDim.x);
         fc_backward_bias<T><<<gridDim, blockDim>>>(
             grad_output.data(),
-            grad_bias_.data(),
+            this->grad_bias_.data(),
             N,
             out_features_
         );
@@ -347,6 +349,24 @@ tensor<T> FullyConnectedLayer<T>::backward(const tensor<T>& grad_output, const t
 
     return grad_input;
 #endif
+}
+
+template<typename T>
+void FullyConnectedLayer<T>::initialize_weights() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    // Xavier/Glorot initialization
+    float limit = std::sqrt(6.0f / (in_features_ + out_features_)); // Adjusted for Glorot uniform
+    std::uniform_real_distribution<T> dist(-limit, limit);
+
+    std::vector<T> host_weights(this->weights_.size());
+    std::vector<T> host_bias(this->bias_.size());
+    for (int i = 0; i < host_weights.size(); ++i) {
+        host_weights[i] = dist(gen);
+    }
+    std::fill(host_bias.begin(), host_bias.end(), static_cast<T>(0.0f));
+    this->weights_.upload(host_weights.data());
+    this->bias_.upload(host_bias.data());
 }
 
 // Explicit template instantiations
