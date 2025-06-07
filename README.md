@@ -1,4 +1,4 @@
-# CUDA DNN Framework: Scalable Transformers on Commodity GPUs
+# DeepFuse: Scalable Transformers on Commodity GPUs
 
 C++ 17 CUDA framework. Support next-gen Blackwell architecture and legacy CUDA devices. Supports e5m2 and e4m3 8-bit 
 quantization. FP32, FP16 and BF16. Advanced support for device management, tensor ops,  cuBLAS and cuDNN.
@@ -6,6 +6,26 @@ quantization. FP32, FP16 and BF16. Advanced support for device management, tenso
 This project demonstrates CUDA functionality and provides a advanced test environment for CUDA operations. 
 Helps breaks the VRAM ceiling, cuts framework overhead, and makes billion-parameter models viable on COTS hardware.
 Azure, MetaAI and DeepMind scaled with big budgets. We scale with efficiency.
+
+## Documentation
+
+### Core Framework ([dnn/README.md](dnn/README.md))
+- Core CUDA components and tensor operations
+- Neural network layers implementation
+- Loss functions and optimizers
+- API reference and usage examples
+
+### Unit Tests ([tests/README.md](tests/README.md))
+- Comprehensive test coverage
+- CUDNN integration testing
+- Performance benchmarks
+- Testing best practices
+
+### Example Applications ([apps/README.md](apps/README.md))
+- Perceptron: Basic binary classification
+- LeNet-5: MNIST digit recognition
+- ResNet-20: Deep residual network
+- Multi-GPU Host: Advanced multi-GPU training
 
 ## Features
 
@@ -55,11 +75,33 @@ Azure, MetaAI and DeepMind scaled with big budgets. We scale with efficiency.
 - **Granular checkpointing**
   Supports checkpoints for the entire model, individual layers, weights, activations, and input batches. Enables precise recovery and flexible, layer-wise debugging.  
 
+## Project Structure
+
+```
+DeepFuse/
+├── dnn/           # Core framework implementation
+│   ├── core/      # CUDA context and tensor operations
+│   ├── layers/    # Neural network layers
+│   ├── losses/    # Loss functions
+│   ├── models/    # Model architectures
+│   └── optimizers/# Optimization algorithms
+├── tests/         # Unit tests and benchmarks
+│   ├── core/      # Core functionality tests
+│   ├── layers/    # Layer implementation tests
+│   └── models/    # Model architecture tests
+└── apps/          # Example applications
+    ├── perceptron/# Basic neural network example
+    ├── lenet5/    # MNIST classification
+    ├── resnet20/  # Deep residual network
+    └── host-multi/# Multi-GPU training
+```
+
 ## Prerequisites
 
 - CUDA Toolkit (compatible with your GPU)
 - CMake (version 3.8 or higher)
 - Visual Studio 2019 or later (for Windows) or GCC/G++ (for Linux)
+- Optional: cuDNN for accelerated operations
 
 ## Quick Start
 
@@ -84,17 +126,6 @@ cmake ..
 make
 ```
 
-## Troubleshooting
-
-- Ensure CUDA Toolkit is properly installed and the environment variables are set correctly
-- For Windows, make sure you're using a compatible version of Visual Studio
-- For Linux, ensure you have the necessary CUDA development packages installed
-
-
-### Strategic Outcome
-
-This technique transforms traditional VRAM-bound training into a time-scheduled, memory-streamed pipeline. It enables research and pretraining of large-scale transformer models on accessible hardware, unlocking high-end LLM capabilities for small-lab or independent development environments.
-
 ## Performance Analysis
 
 ### Training Performance
@@ -114,10 +145,16 @@ This technique transforms traditional VRAM-bound training into a time-scheduled,
 - Training time analysis
 
 ### Scaling Analysis
-- 
 - Multi-GPU scaling: throughput and efficiency across devices
 - Distributed pipeline: layer/data parallelism with disk-backed streaming
 - VRAM overflow: swap and memory management for oversized models
+
+## Troubleshooting
+
+- Ensure CUDA Toolkit is properly installed and the environment variables are set correctly
+- For Windows, make sure you're using a compatible version of Visual Studio
+- For Linux, ensure you have the necessary CUDA development packages installed
+- Check the [tests/README.md](tests/README.md) for known issues and solutions
 
 ## License
 
