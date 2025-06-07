@@ -9,19 +9,19 @@ Azure, MetaAI and DeepMind scaled with big budgets. We scale with efficiency.
 
 ## Documentation
 
-### Core Framework ([dnn/README.md](dnn/README.md))
+### Core Framework ([dnn/](dnn/))
 - Core CUDA components and tensor operations
 - Neural network layers implementation
 - Loss functions and optimizers
 - API reference and usage examples
 
-### Unit Tests ([tests/README.md](tests/README.md))
+### Unit Tests ([tests/](tests/))
 - Comprehensive test coverage
 - CUDNN integration testing
 - Performance benchmarks
 - Testing best practices
 
-### Example Applications ([apps/README.md](apps/README.md))
+### Example Applications ([apps/](apps/))
 - Perceptron: Basic binary classification
 - LeNet-5: MNIST digit recognition
 - ResNet-20: Deep residual network
@@ -154,7 +154,7 @@ make
 - Ensure CUDA Toolkit is properly installed and the environment variables are set correctly
 - For Windows, make sure you're using a compatible version of Visual Studio
 - For Linux, ensure you have the necessary CUDA development packages installed
-- Check the [tests/README.md](tests/README.md) for known issues and solutions
+- Check the [tests/](tests/) for known issues and solutions
 
 ## License
 
