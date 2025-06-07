@@ -1,6 +1,7 @@
 #include <dnn/core/cuda.cuh>
 #include <dnn/models/perceptron.cuh>
 
+#include <algorithm>
 #include <iostream>
 #include <filesystem>
 #include <numeric>

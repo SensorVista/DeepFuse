@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.18)
 project(DeepFuse 
     DESCRIPTION "Deep Learning Library for CUDA."
     LANGUAGES C CUDA CXX)
@@ -60,4 +60,6 @@ add_subdirectory(tests)
 add_subdirectory(apps/lenet5)
 add_subdirectory(apps/perceptron)
 add_subdirectory(apps/resnet20)
-add_subdirectory(apps/host-multi)
+if (NOT UNIX)
+    add_subdirectory(apps/host-multi)
+endif()
