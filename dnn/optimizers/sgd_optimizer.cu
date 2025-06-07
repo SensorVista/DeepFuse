@@ -34,17 +34,18 @@ __global__ void sgd_update_kernel(
 template<typename T>
 void SGDOptimizer<T>::step() {
     for (int i = 0; i < this->parameters_.size(); ++i) {
-
         auto* param = this->parameters_[i];
+        auto* grad = this->gradients_[i];
+        auto* velocity = velocities_.at(param).get();
+
         int size = param->size();
-        
         int block_size = 256;
         int num_blocks = (size + block_size - 1) / block_size;
     
         sgd_update_kernel<<<num_blocks, block_size>>>(
             param->data(),
-            this->gradients_[i]->data(),
-            velocities_[i].data(),
+            grad->data(),
+            velocity->data(),
             learning_rate_,
             momentum_,
             weight_decay_,
@@ -66,11 +67,12 @@ template<typename T>
 void SGDOptimizer<T>::update_parameters(const std::vector<tensor<T>*>& parameters, const std::vector<tensor<T>*>& gradients) {
     Optimizer<T>::update_parameters(parameters, gradients);
 
-    velocities_.clear();
-    velocities_.reserve(parameters.size());
-    for (const auto* param : parameters) {
-        velocities_.emplace_back(param->shape());
-        velocities_.back().fill(0);
+    for (auto* param : parameters) {
+        if (velocities_.find(param) == velocities_.end()) {
+            auto velocity = std::make_unique<tensor<T>>(param->shape());
+            velocity->fill(0);
+            velocities_.emplace(param, std::move(velocity));
+        }
     }
 }
 

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "dnn/optimizers/optimizer.cuh"
+#include <memory>
+#include <unordered_map>
 
 namespace dnn {
 
@@ -27,7 +29,7 @@ private:
     T learning_rate_;
     T momentum_;
     T weight_decay_;
-    std::vector<tensor<T>> velocities_;
+    std::unordered_map<tensor<T>*, std::unique_ptr<tensor<T>>> velocities_;
 };
 
 } // namespace dnn 
