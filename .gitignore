@@ -56,8 +56,9 @@ Makefile
 *.ninja
 .cmake/
 
-# Dataset directories
-datasets/
+# Dataset directories and files
+/datasets/
+/datasets/**
 *.h5
 *.hdf5
 *.npy
