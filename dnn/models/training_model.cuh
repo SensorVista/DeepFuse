@@ -20,7 +20,7 @@ namespace dnn {
 template<typename T>
 class TrainingModel : public Model<T> {
 public:
-    explicit TrainingModel(bool enable_training = false) : Model<T>() {
+    explicit TrainingModel() : Model<T>() {
     }
 
     virtual ~TrainingModel() = default;

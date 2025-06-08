@@ -1,10 +1,12 @@
 #pragma once
 
-#include <dnn/models/training_model.cuh>
+#include <dnn/models/model.cuh>
 
+#include <cstdint>
+#include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <cstdint>
 
 namespace dnn {
 
@@ -50,14 +52,17 @@ struct SerializedModel {
     std::string timestamp;
 };
 
-// Load and save ONNX v2 models
-void load_onyx_v2(const std::string& path, SerializedModel& model);
-void save_onyx_v2(const SerializedModel& model, const std::string& path);
+// Load and save ONNX v2 models with SerializedModel
+static void load_onyx_v2(const std::string& path, SerializedModel& model);
+static void save_onyx_v2(const SerializedModel& model, const std::string& path);
 
-// Load and save ONNX v2 models with float precision
-TrainingModel<float>* load_onyx_v2(const std::string& path);
-void save_onyx_v2(TrainingModel<float>* model, const std::string& path);
+// Load and save ONNX v2 models with Model<T>
+template<typename T>
+static Model<T>* load_onyx_v2(const std::string& path);
 
-}; 
+template<typename T>
+static void save_onyx_v2(const Model<T>* model, const std::string& path);
+
+};
 
 } // namespace dnn

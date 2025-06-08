@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <unordered_map>
+#include <functional>
 
 namespace dnn {
 
@@ -31,18 +33,30 @@ public:
     // Get layer name
     virtual std::string name() const = 0;
 
+    // // Layer factory
+    // using LayerCreator = std::function<std::unique_ptr<Layer<T>>(const OnnxLoader::SerializedLayer&, const std::vector<OnnxLoader::SerializedTensor>&)>;
+    
+    // static std::unique_ptr<Layer<T>> create_layer(const OnnxLoader::SerializedLayer& layer, const std::vector<OnnxLoader::SerializedTensor>& tensors) {
+    //     auto it = creators_.find(layer.type);
+    //     if (it == creators_.end()) {
+    //         throw std::runtime_error("Unknown layer type: " + layer.type);
+    //     }
+    //     return it->second(layer, tensors);
+    // }
+
+    // static void register_layer(const std::string& type, LayerCreator creator) {
+    //     creators_[type] = creator;
+    // }
+
 protected:
     // Helper function to check input shape
     bool check_input_shape(const tensor<T>& input, const std::vector<int>& expected_shape) const {
         return input.shape() == expected_shape;
     }
+
+    // // Static registry of layer creators
+    // static std::unordered_map<std::string, LayerCreator> creators_;
 };
-
-// Forward declarations for supported template types
-template class Layer<float>;  // FP32
-// template class Layer<__half>; // FP16
-// template class Layer<__nv_bfloat16>; // BF16
-
 
 template<typename T>
 class LayerWeightBias : public Layer<T> {

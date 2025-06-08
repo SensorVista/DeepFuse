@@ -9,14 +9,30 @@
 #include <fstream>  
 #include <stdexcept>    
 #include <unordered_map>
+#include <memory>
+
+static inline void write_string(std::ostream& out, const std::string& str) {
+    uint32_t len = static_cast<uint32_t>(str.size());
+    out.write(reinterpret_cast<const char*>(&len), sizeof(len));
+    out.write(str.data(), len);
+}
+
+static inline std::string read_string(std::istream& in) {
+    uint32_t len;
+    in.read(reinterpret_cast<char*>(&len), sizeof(len));
+    std::string str(len, '\0');
+    in.read(&str[0], len);
+    return str;
+}
 
 namespace dnn {
 
-TrainingModel<float>* OnnxLoader::load_onyx_v2(const std::string& path) {
+template<typename T>
+Model<T>* OnnxLoader::load_onyx_v2(const std::string& path) {
     SerializedModel smodel;
-    load_onyx_v2(path, smodel);
+    OnnxLoader::load_onyx_v2(path, smodel);
 
-    auto* model = new TrainingModel<float>();
+    auto model = new TrainingModel<T>();
 
     std::unordered_map<std::string, tensor<float>> tensor_map;
     for (const auto& t : smodel.tensors) {
@@ -85,7 +101,8 @@ TrainingModel<float>* OnnxLoader::load_onyx_v2(const std::string& path) {
     return model;
 }
 
-void OnnxLoader::save_onyx_v2(TrainingModel<float>* model, const std::string& path) {
+template<typename T>
+void OnnxLoader::save_onyx_v2(const Model<T>* model, const std::string& path) {
     SerializedModel smodel;
     smodel.name = "exported_model";
     smodel.framework = "C++";
@@ -112,21 +129,7 @@ void OnnxLoader::save_onyx_v2(TrainingModel<float>* model, const std::string& pa
         smodel.layers.push_back(std::move(layer));
     }
 
-    save_onyx_v2(smodel, path);
-}
-
-static void write_string(std::ostream& out, const std::string& str) {
-    uint32_t len = static_cast<uint32_t>(str.size());
-    out.write(reinterpret_cast<const char*>(&len), sizeof(len));
-    out.write(str.data(), len);
-}
-
-static std::string read_string(std::istream& in) {
-    uint32_t len;
-    in.read(reinterpret_cast<char*>(&len), sizeof(len));
-    std::string str(len, '\0');
-    in.read(&str[0], len);
-    return str;
+    OnnxLoader::save_onyx_v2(smodel, path);
 }
 
 void OnnxLoader::load_onyx_v2(const std::string& path, SerializedModel& model) {
@@ -248,5 +251,9 @@ void OnnxLoader::save_onyx_v2(const SerializedModel& model, const std::string& p
     out.write(reinterpret_cast<const char*>(&output_tensor_count), sizeof(output_tensor_count));
     for (const auto& s : model.outputs) write_string(out, s);
 }
+
+// Explicit template instantiations
+template Model<float>* OnnxLoader::load_onyx_v2<float>(const std::string& path);
+template void OnnxLoader::save_onyx_v2<float>(const Model<float>* model, const std::string& path);
 
 } // namespace dnn  
