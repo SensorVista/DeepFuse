@@ -4,16 +4,16 @@
 #include <tbb/parallel_for.h>
 #include <tbb/task_arena.h>
 
+#include <atomic>
+#include <cmath>
 #include <iostream>
 #include <filesystem>
+#include <memory>
+#include <mutex>
 #include <numeric>
 #include <random>
-#include <vector>
 #include <thread>
-#include <mutex>
-#include <atomic>
-#include <memory>
-#include <cmath>
+#include <vector>
 
 // Global mutex for thread-safe output
 std::mutex g_output_mutex;
@@ -24,6 +24,7 @@ void print_usage(const char* program_name) {
     if (last_slash != std::string::npos) {
         name = name.substr(last_slash + 1);
     }
+
     size_t last_dot = name.find_last_of('.');
     if (last_dot != std::string::npos) {
         name = name.substr(0, last_dot);

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 4.0)
 project(DeepFuse 
     DESCRIPTION "Deep Learning Library for CUDA."
     LANGUAGES C CUDA CXX)

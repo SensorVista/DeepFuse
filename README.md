@@ -99,7 +99,7 @@ DeepFuse/
 ## Prerequisites
 
 - CUDA Toolkit (compatible with your GPU)
-- CMake (version 3.8 or higher)
+- CMake (version 4.0 or higher)
 - Visual Studio 2019 or later (for Windows) or GCC/G++ (for Linux)
 - Optional: cuDNN for accelerated operations
 

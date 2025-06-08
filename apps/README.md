@@ -53,9 +53,8 @@ make
 
 - CUDA Toolkit 11.0 or higher
 - C++17 or higher
-- CMake 3.15 or higher
-- TBB (for host-multi application)
-- NVMe support (optional, for host-multi application)
+- CMake 4.0 or higher
+- NVMe support (optional, for host-multi example)
 
 ## Performance Considerations
 
