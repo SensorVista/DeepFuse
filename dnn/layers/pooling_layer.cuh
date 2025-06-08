@@ -41,4 +41,28 @@ private:
 #endif
 };
 
+template<typename T>
+class GlobalPoolingLayer : public Layer<T> {
+public:
+    explicit GlobalPoolingLayer(PoolingType type);
+    ~GlobalPoolingLayer();
+
+    tensor<T> forward(const tensor<T>& input) override;
+    tensor<T> backward(const tensor<T>& grad_output, const tensor<T>& input) override;
+
+    std::vector<tensor<T>*> parameters() override { return {}; }
+    std::vector<tensor<T>*> gradients() override { return {}; }
+
+    std::string name() const override { return "GlobalPooling"; }
+
+private:
+    PoolingType type_;
+
+#ifdef ENABLE_CUDNN
+    cudnnPoolingDescriptor_t pool_desc_;
+    cudnnTensorDescriptor_t input_desc_;
+    cudnnTensorDescriptor_t output_desc_;
+#endif
+};
+
 } // namespace dnn 

@@ -15,14 +15,15 @@ enum class ActivationType {
     Sigmoid = CUDNN_ACTIVATION_SIGMOID,
     Tanh = CUDNN_ACTIVATION_TANH,
     ClippedReLU = CUDNN_ACTIVATION_CLIPPED_RELU,
-    Elu = CUDNN_ACTIVATION_ELU
+    Elu = CUDNN_ACTIVATION_ELU,
 #else
     ReLU,
     Sigmoid,
     Tanh,
     ClippedReLU,
-    Elu
+    Elu,
 #endif
+    GELU,
 };
 
 template<typename T>

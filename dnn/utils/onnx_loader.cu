@@ -65,8 +65,23 @@ Model<T>* OnnxLoader::load_onyx_v2(const std::string& path) {
 
             model->add_layer(std::move(conv_layer));
         } 
-        else if (layer.type == "ReLU") {
+        else if (layer.type == "Activation-Sigmoid") {
+            model->add_layer(std::make_unique<ActivationLayer<float>>(ActivationType::Sigmoid));
+        } 
+        else if (layer.type == "Activation-Tanh") {
+            model->add_layer(std::make_unique<ActivationLayer<float>>(ActivationType::Tanh));
+        } 
+        else if (layer.type == "Activation-ReLU") {
             model->add_layer(std::make_unique<ActivationLayer<float>>(ActivationType::ReLU));
+        } 
+        else if (layer.type == "Activation-ClippedReLU") {
+            model->add_layer(std::make_unique<ActivationLayer<float>>(ActivationType::ClippedReLU));
+        } 
+        else if (layer.type == "Activation-Elu") {
+            model->add_layer(std::make_unique<ActivationLayer<float>>(ActivationType::Elu));
+        } 
+        else if (layer.type == "Activation-GELU") {
+            model->add_layer(std::make_unique<ActivationLayer<float>>(ActivationType::GELU));
         } 
         else if (layer.type == "Gemm" || layer.type == "Linear") {
             tensor<float> weight = std::move(tensor_map.at(layer.inputs[1]));

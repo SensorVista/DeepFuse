@@ -357,21 +357,31 @@ void FullyConnectedLayer<T>::initialize_weights() {
     std::mt19937 gen(rd());
     // Xavier/Glorot initialization
     float limit = std::sqrt(6.0f / (in_features_ + out_features_)); // Adjusted for Glorot uniform
-    std::uniform_real_distribution<T> dist(-limit, limit);
-
+    
     std::vector<T> host_weights(this->weights_.size());
     std::vector<T> host_bias(this->bias_.size());
-    for (int i = 0; i < host_weights.size(); ++i) {
-        host_weights[i] = dist(gen);
+
+    if constexpr (std::is_same<T, __half>::value) {
+        std::uniform_real_distribution<float> dist(-limit, limit);
+        for (int i = 0; i < host_weights.size(); ++i) {
+            host_weights[i] = __float2half(dist(gen));
+        }
+        std::fill(host_bias.begin(), host_bias.end(), __float2half(0.0f));
+    } else {
+        std::uniform_real_distribution<T> dist(-limit, limit);
+        for (int i = 0; i < host_weights.size(); ++i) {
+            host_weights[i] = dist(gen);
+        }
+        std::fill(host_bias.begin(), host_bias.end(), static_cast<T>(0.0f));
     }
-    std::fill(host_bias.begin(), host_bias.end(), static_cast<T>(0.0f));
+
     this->weights_.upload(host_weights.data());
     this->bias_.upload(host_bias.data());
 }
 
 // Explicit template instantiations
 template class FullyConnectedLayer<float>;  // FP32
-// template class FullyConnectedLayer<__half>; // FP16
+template class FullyConnectedLayer<__half>; // FP16
 // template class FullyConnectedLayer<__nv_bfloat16>; // BF16
 
 } // namespace dnn 

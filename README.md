@@ -4,7 +4,7 @@ C++ 17 CUDA framework. Support next-gen Blackwell architecture and legacy CUDA d
 quantization. FP32, FP16 and BF16. Advanced support for device management, tensor ops,  cuBLAS and cuDNN.
 
 This project demonstrates CUDA functionality and provides a advanced test environment for CUDA operations. 
-Helps breaks the VRAM ceiling, cuts framework overhead, and makes billion-parameter models viable on COTS hardware.
+Breaks the VRAM ceiling, reduces overhead, and enables billion-scale transformers on consumer GPUs.
 Azure, MetaAI and DeepMind scaled with big budgets. We scale with efficiency.
 
 ## Documentation
@@ -48,17 +48,17 @@ Azure, MetaAI and DeepMind scaled with big budgets. We scale with efficiency.
 - **Residual Connections**: Memory-efficient implementation
 
 ### Benefits
+- **Disk-backed execution**  
+  Weight tensors, optimizer state, and activations are managed off-GPU using pinned host memory and NVMe streaming, removing memory ceilings.
+
+- **Stream layers, not models**  
+  Execute arbitrarily deep networks by paging individual layers in and out of GPU memory, enabling transformer stacks that exceed device limits.
+
 - **Train GPT-class models on consumer GPUs**  
   Pretrain and fine-tune billion-parameter transformers on devices like the RTX 4090 or older multi-GPU rigs, without needing massive VRAM.
 
 - **Bypass framework overhead**  
   Fully custom CUDA/C++ implementation with zero reliance on PyTorch, TensorFlow, or external autograd frameworks.
-
-- **Stream layers, not models**  
-  Execute arbitrarily deep networks by paging individual layers in and out of GPU memory, enabling transformer stacks that exceed device limits.
-
-- **Disk-backed execution**  
-  Weight tensors, optimizer state, and activations are managed off-GPU using pinned host memory and NVMe streaming, removing memory ceilings.
 
 - **Precision without compromise**  
   Supports Tensor Core acceleration, FP16/BF16 mixed precision, and warp-level primitives for fused, high-throughput kernels.
@@ -75,7 +75,7 @@ Azure, MetaAI and DeepMind scaled with big budgets. We scale with efficiency.
 - **Granular checkpointing**
   Supports checkpoints for the entire model, individual layers, weights, activations, and input batches. Enables precise recovery and flexible, layer-wise debugging.  
 
-## Project Structure
+## Example Project Structure
 
 ```
 DeepFuse/
@@ -164,3 +164,5 @@ Copyright © 2025 SensorVista, LLC
 
 This code and documentation are provided for reference only.  
 No license is granted for use, modification, or redistribution without explicit written permission.
+
+For licensing inquiries and research partnerships, contact SensorVista, LLC.

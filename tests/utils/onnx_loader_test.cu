@@ -160,9 +160,8 @@ protected:
 };
 
 TEST_F(ONNXLoaderTest, LoadModelSuccess) {
-    OnnxLoader loader;
     OnnxLoader::SerializedModel model;
-    ASSERT_NO_THROW(loader.load_onyx_v2(onnx_filepath, model));
+    ASSERT_NO_THROW(OnnxLoader::load_onyx_v2(onnx_filepath, model));
     
     // Basic verification that model loaded
     EXPECT_FALSE(model.name.empty());
@@ -171,18 +170,16 @@ TEST_F(ONNXLoaderTest, LoadModelSuccess) {
 }
 
 TEST_F(ONNXLoaderTest, LoadInvalidFile) {
-    OnnxLoader loader;
     OnnxLoader::SerializedModel model;
     EXPECT_THROW(
-        loader.load_onyx_v2("nonexistent_file.onnx", model),
+        OnnxLoader::load_onyx_v2("nonexistent_file.onnx", model),
         std::runtime_error
     );
 }
 
 TEST_F(ONNXLoaderTest, ModelStructure) {
-    OnnxLoader loader;
     OnnxLoader::SerializedModel model;
-    loader.load_onyx_v2(onnx_filepath, model);
+    OnnxLoader::load_onyx_v2(onnx_filepath, model);
     
     // Verify model structure
     EXPECT_FALSE(model.name.empty());
@@ -194,8 +191,7 @@ TEST_F(ONNXLoaderTest, ModelStructure) {
 }
 
 TEST_F(ONNXLoaderTest, TrainingModelConversion) {
-    OnnxLoader loader;
-    auto model = loader.load_onyx_v2<float>(onnx_filepath);
+    auto model = OnnxLoader::load_onyx_v2<float>(onnx_filepath);
     
     // Basic verification that model loaded
     EXPECT_NE(model, nullptr);
@@ -203,9 +199,8 @@ TEST_F(ONNXLoaderTest, TrainingModelConversion) {
 }
 
 TEST_F(ONNXLoaderTest, LoadModelWithData) {
-    OnnxLoader loader;
     OnnxLoader::SerializedModel model;
-    ASSERT_NO_THROW(loader.load_onyx_v2(onnx_filepath, model));
+    ASSERT_NO_THROW(OnnxLoader::load_onyx_v2(onnx_filepath, model));
     
     // Verify model metadata
     EXPECT_EQ(model.name, "test_model");
@@ -238,8 +233,7 @@ TEST_F(ONNXLoaderTest, LoadModelWithData) {
 }
 
 TEST_F(ONNXLoaderTest, TrainingModelWithData) {
-    OnnxLoader loader;
-    auto model = loader.load_onyx_v2<float>(onnx_filepath);
+    auto model = OnnxLoader::load_onyx_v2<float>(onnx_filepath);
     
     // Basic verification that model loaded
     EXPECT_NE(model, nullptr);
@@ -248,7 +242,7 @@ TEST_F(ONNXLoaderTest, TrainingModelWithData) {
     // Verify layer types
     const auto& layers = model->layers();
     EXPECT_EQ(layers[0]->name(), "Conv");
-    EXPECT_EQ(layers[1]->name(), "Activation(ReLU)");
+    EXPECT_EQ(layers[1]->name(), "Activation-ReLU");
 }
 
 } // namespace test

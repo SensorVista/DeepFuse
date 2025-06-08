@@ -24,6 +24,27 @@ __global__ void fill_kernel(T* data, T value, int size) {
         data[i] = value;
 }
 
+template <typename T>
+__global__ void add_kernel(const T* a, const T* b, T* out, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) out[idx] = a[idx] + b[idx];
+}
+
+template <typename T>
+__global__ void add_inplace_kernel(T* a, const T* b, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) a[idx] += b[idx];
+}
+
+template <typename T>
+__global__ void transpose_kernel(const T* input, T* output, int M, int N) {
+    int i = blockIdx.y * blockDim.y + threadIdx.y;
+    int j = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < M && j < N) {
+        output[j * M + i] = input[i * N + j];
+    }
+}
+
 namespace dnn {
 
 template<typename T>
@@ -248,19 +269,113 @@ std::string tensor<T>::to_string() const {
     return oss.str();
 }
 
+// ------------------------------------------
+// Operator +
+// ------------------------------------------
+template<typename T>
+tensor<T> operator+(const tensor<T>& a, const tensor<T>& b) {
+    if (a.shape() != b.shape()) {
+        throw std::runtime_error("Shape mismatch in operator+");
+    }
+
+    tensor<T> out(a.shape());
+    int size = a.size();
+    int threads = 256;
+    int blocks = (size + threads - 1) / threads;
+
+    add_kernel<<<blocks, threads>>>(a.data(), b.data(), out.data(), size);
+    CHECK_CUDA_EX(cudaDeviceSynchronize());
+    return out;
+}
+
+// ------------------------------------------
+// Operator +=
+// ------------------------------------------
+template<typename T>
+tensor<T>& operator+=(tensor<T>& a, const tensor<T>& b) {
+    if (a.shape() != b.shape()) {
+        throw std::runtime_error("Shape mismatch in operator+=");
+    }
+
+    int size = a.size();
+    int threads = 256;
+    int blocks = (size + threads - 1) / threads;
+
+    add_inplace_kernel<<<blocks, threads>>>(a.data(), b.data(), size);
+    CHECK_CUDA_EX(cudaDeviceSynchronize());
+    return a;
+}
+
+// ------------------------------------------
+// Transpose (2D only)
+// ------------------------------------------
+template<typename T>
+void transpose(tensor<T>& a) {
+    const std::vector<int>& shape = a.shape();
+    if (shape.size() != 2) {
+        throw std::runtime_error("Transpose supports only 2D tensors");
+    }
+
+    int M = shape[0];
+    int N = shape[1];
+    tensor<T> out({N, M});
+
+    dim3 block(16, 16);
+    dim3 grid((N + 15) / 16, (M + 15) / 16);
+
+    transpose_kernel<<<grid, block>>>(a.data(), out.data(), M, N);
+    CHECK_CUDA_EX(cudaDeviceSynchronize());
+
+    a = std::move(out);
+}
+
 // Forward declarations for supported template types
 template class tensor<float>;  // FP32
 template class tensor<__half>; // FP16
 template class tensor<__nv_bfloat16>; // BF16
 
+// general purpose
+template class tensor<int>;
+template class tensor<int8_t>;
+template class tensor<uint8_t>;
+
+template tensor<float> operator+(const tensor<float>&, const tensor<float>&);
+template tensor<float>& operator+=(tensor<float>&, const tensor<float>&);
+template void transpose(tensor<float>&);
+
+template tensor<__half> operator+(const tensor<__half>&, const tensor<__half>&);
+template tensor<__half>& operator+=(tensor<__half>&, const tensor<__half>&);
+template void transpose(tensor<__half>&);
+
+template tensor<__nv_bfloat16> operator+(const tensor<__nv_bfloat16>&, const tensor<__nv_bfloat16>&);
+template tensor<__nv_bfloat16>& operator+=(tensor<__nv_bfloat16>&, const tensor<__nv_bfloat16>&);
+template void transpose(tensor<__nv_bfloat16>&);
+
+template tensor<int8_t> operator+(const tensor<int8_t>&, const tensor<int8_t>&);
+template tensor<int8_t>& operator+=(tensor<int8_t>&, const tensor<int8_t>&);
+template void transpose(tensor<int8_t>&);
+
+template tensor<uint8_t> operator+(const tensor<uint8_t>&, const tensor<uint8_t>&);
+template tensor<uint8_t>& operator+=(tensor<uint8_t>&, const tensor<uint8_t>&);
+template void transpose(tensor<uint8_t>&);
+
+template tensor<int> operator+(const tensor<int>&, const tensor<int>&);
+template tensor<int>& operator+=(tensor<int>&, const tensor<int>&);
+template void transpose(tensor<int>&);
+
 #ifdef __CUDA_FP8_TYPES_EXIST__
 // Use FP8 Tensor Core Hopper+ (SM 9.0+)
 template class tensor<__nv_fp8x4_e5m2>;
 template class tensor<__nv_fp8x4_e4m3>;
+
+template tensor<__nv_fp8x4_e5m2> operator+(const tensor<__nv_fp8x4_e5m2>&, const tensor<__nv_fp8x4_e5m2>&);
+template tensor<__nv_fp8x4_e5m2>& operator+=(tensor<__nv_fp8x4_e5m2>&, const tensor<__nv_fp8x4_e5m2>&);
+template void transpose(tensor<__nv_fp8x4_e5m2>&);
+
+template tensor<__nv_fp8x4_e4m3> operator+(const tensor<__nv_fp8x4_e4m3>&, const tensor<__nv_fp8x4_e4m3>&);
+template tensor<__nv_fp8x4_e4m3>& operator+=(tensor<__nv_fp8x4_e4m3>&, const tensor<__nv_fp8x4_e4m3>&);
+template void transpose(tensor<__nv_fp8x4_e4m3>&);
 #endif
 
-// general purpose (or int8 emulation if needed)
-template class tensor<int8_t>;
-template class tensor<uint8_t>;
 
 } // namespace dnn

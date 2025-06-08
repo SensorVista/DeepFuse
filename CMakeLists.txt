@@ -35,6 +35,9 @@ if(DEFINED USE_CUDNN AND USE_CUDNN)
     )    
 endif()
 
+# Add CUDA include directories
+include_directories(${CMAKE_SOURCE_DIR} ${CUDAToolkit_INCLUDE_DIR})
+
 # Enable testing
 enable_testing()
 include(FetchContent)
@@ -60,6 +63,7 @@ add_subdirectory(tests)
 add_subdirectory(apps/lenet5)
 add_subdirectory(apps/perceptron)
 add_subdirectory(apps/resnet20)
+add_subdirectory(apps/gpt2)
 if (NOT UNIX)
     add_subdirectory(apps/host-multi)
 endif()

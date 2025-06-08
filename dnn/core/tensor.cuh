@@ -73,6 +73,18 @@ public:
     // Copy tensor data from another tensor
     void copy_from(const tensor<T>& src);
 
+    // Add two tensors
+    template<typename U>
+    friend tensor<U> operator+(const tensor<U>& a, const tensor<U>& b);
+
+    // Add two tensors in place
+    template<typename U>
+    friend tensor<U>& operator+=(tensor<U>& a, const tensor<U>& b);
+
+    // Transpose tensor
+    template<typename U>
+    friend void transpose(tensor<U>& a);    
+
     // Output tensor to string
     std::string to_string() const;
 
@@ -88,10 +100,17 @@ public:
 #endif
 };
 
+// __half = fp16
+// __nv_bfloat16 = bf16
+// __nv_fp8x4_e5m2 = fp8_e5m2
+// __nv_fp8x4_e4m3 = fp8_e4m3
+
+
 // Concrete aliases for commonly used tensor types
 using tensorf   = tensor<float>;
 using tensorh   = tensor<__half>;
 using tensorbf  = tensor<__nv_bfloat16>;
+using tensori  = tensor<int>;
 using tensori8  = tensor<int8_t>;
 using tensoru8  = tensor<uint8_t>;
 

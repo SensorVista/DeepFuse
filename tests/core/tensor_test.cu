@@ -101,5 +101,98 @@ TEST_F(TensorTest, MoveSemantics) {
     EXPECT_NE(t3.data(), nullptr);
 }
 
+TEST_F(TensorTest, Addition) {
+    std::vector<int> shape = {2, 2};
+    tensor<float> t1(shape);
+    tensor<float> t2(shape);
+    
+    std::vector<float> data1 = {1.0f, 2.0f, 3.0f, 4.0f};
+    std::vector<float> data2 = {5.0f, 6.0f, 7.0f, 8.0f};
+    t1.upload(data1.data());
+    t2.upload(data2.data());
+    
+    // Test operator+
+    tensor<float> t3 = t1 + t2;
+    std::vector<float> result(4);
+    t3.download(result.data());
+    
+    EXPECT_FLOAT_EQ(result[0], 6.0f);  // 1.0 + 5.0
+    EXPECT_FLOAT_EQ(result[1], 8.0f);  // 2.0 + 6.0
+    EXPECT_FLOAT_EQ(result[2], 10.0f); // 3.0 + 7.0
+    EXPECT_FLOAT_EQ(result[3], 12.0f); // 4.0 + 8.0
+}
+
+TEST_F(TensorTest, InPlaceAddition) {
+    std::vector<int> shape = {2, 2};
+    tensor<float> t1(shape);
+    tensor<float> t2(shape);
+    
+    std::vector<float> data1 = {1.0f, 2.0f, 3.0f, 4.0f};
+    std::vector<float> data2 = {5.0f, 6.0f, 7.0f, 8.0f};
+    t1.upload(data1.data());
+    t2.upload(data2.data());
+    
+    // Test operator+=
+    t1 += t2;
+    std::vector<float> result(4);
+    t1.download(result.data());
+    
+    EXPECT_FLOAT_EQ(result[0], 6.0f);  // 1.0 + 5.0
+    EXPECT_FLOAT_EQ(result[1], 8.0f);  // 2.0 + 6.0
+    EXPECT_FLOAT_EQ(result[2], 10.0f); // 3.0 + 7.0
+    EXPECT_FLOAT_EQ(result[3], 12.0f); // 4.0 + 8.0
+}
+
+TEST_F(TensorTest, Transpose) {
+    std::vector<int> shape = {2, 3};
+    tensor<float> t(shape);
+    
+    // Initialize with a 2x3 matrix
+    std::vector<float> data = {
+        1.0f, 2.0f, 3.0f,
+        4.0f, 5.0f, 6.0f
+    };
+    t.upload(data.data());
+    
+    // Transpose the matrix
+    transpose(t);
+    
+    // Check new shape
+    EXPECT_EQ(t.shape()[0], 3);
+    EXPECT_EQ(t.shape()[1], 2);
+    
+    // Check transposed values
+    std::vector<float> result(6);
+    t.download(result.data());
+    
+    EXPECT_FLOAT_EQ(result[0], 1.0f); // (0,0) -> (0,0)
+    EXPECT_FLOAT_EQ(result[1], 4.0f); // (1,0) -> (0,1)
+    EXPECT_FLOAT_EQ(result[2], 2.0f); // (0,1) -> (1,0)
+    EXPECT_FLOAT_EQ(result[3], 5.0f); // (1,1) -> (1,1)
+    EXPECT_FLOAT_EQ(result[4], 3.0f); // (0,2) -> (2,0)
+    EXPECT_FLOAT_EQ(result[5], 6.0f); // (1,2) -> (2,1)
+}
+
+TEST_F(TensorTest, ShapeMismatchAddition) {
+    std::vector<int> shape1 = {2, 2};
+    std::vector<int> shape2 = {2, 3};
+    tensor<float> t1(shape1);
+    tensor<float> t2(shape2);
+    
+    // Test operator+
+    EXPECT_THROW(t1 + t2, std::runtime_error);
+    
+    // Test operator+=
+    EXPECT_THROW(t1 += t2, std::runtime_error);
+}
+
+TEST_F(TensorTest, InvalidTranspose) {
+    std::vector<int> shape = {2, 3, 4}; // 3D tensor
+    tensor<float> t(shape);
+    
+    // Transpose should throw for non-2D tensors
+    EXPECT_THROW(transpose(t), std::runtime_error);
+}
+
 } // namespace test
 } // namespace dnn 
