@@ -1,5 +1,3 @@
-#pragma once
-
 #include "dnn/core/tensor.cuh"
 
 #include "dnn/utils/common.cuh"

@@ -1,5 +1,3 @@
-#pragma once
-
 #include "device.cuh"
 #include "../utils/common.cuh"
 

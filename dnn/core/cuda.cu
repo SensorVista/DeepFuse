@@ -1,5 +1,3 @@
-#pragma once
-
 #include "cuda.cuh"
 #include "../utils/common.cuh"
 
