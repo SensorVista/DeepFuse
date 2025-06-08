@@ -15,8 +15,10 @@ public:
     virtual void step() = 0;
     virtual void zero_grad() = 0;
 
-    virtual std::vector<tensor<T>*> parameters() { return parameters_; }
-    virtual std::vector<tensor<T>*> gradients() { return gradients_; }
+    virtual std::vector<tensor<T>*>& parameters() { return parameters_; }
+    virtual const std::vector<tensor<T>*>& parameters() const { return parameters_; }
+    virtual std::vector<tensor<T>*>& gradients() { return gradients_; }
+    virtual const std::vector<tensor<T>*>& gradients() const { return gradients_; }
 
     // Set parameters to optimize
     virtual void update_parameters(
