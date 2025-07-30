@@ -1,0 +1,40 @@
+#pragma once
+
+#include "dnn/core/tensor.cuh"
+#include <vector>
+#include <memory>
+
+namespace dnn {
+
+template<typename T>
+class Optimizer {
+public:
+    virtual ~Optimizer() = default;
+
+    // Perform optimization step
+    virtual void step() = 0;
+    virtual void zero_grad() = 0;
+
+    virtual std::vector<tensor<T>*>& parameters() { return parameters_; }
+    virtual const std::vector<tensor<T>*>& parameters() const { return parameters_; }
+    virtual std::vector<tensor<T>*>& gradients() { return gradients_; }
+    virtual const std::vector<tensor<T>*>& gradients() const { return gradients_; }
+
+    // Set parameters to optimize
+    virtual void update_parameters(
+        const std::vector<tensor<T>*>& parameters,
+        const std::vector<tensor<T>*>& gradients) {
+        parameters_ = parameters;
+        gradients_ = gradients;
+    }
+
+    // Get and set learning rate (virtual methods)
+    virtual T learning_rate() const = 0;
+    virtual void set_learning_rate(T new_lr) = 0;
+
+protected:
+    std::vector<tensor<T>*> parameters_;       // model parameters (weights/biases)
+    std::vector<tensor<T>*> gradients_;        // gradients for those parameters
+};
+
+} // namespace dnn 
