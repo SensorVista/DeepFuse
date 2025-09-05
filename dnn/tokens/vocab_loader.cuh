@@ -22,6 +22,7 @@ public:
 
     // Add token manually
     void add_token(const std::string& token);
+    void add_token(const std::string& token, int id);
 
     // Load vocabulary from file
     void load_from_file(const std::string& path);

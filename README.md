@@ -14,6 +14,7 @@ DeepFuse is a high-performance C++17/CUDA deep learning framework designed to en
 - **Advanced CUDA Optimization**: Custom kernels with Tensor Core acceleration
 - **Multi-GPU Support**: Parallel training across multiple devices with TBB
 - **Complete Transformer Stack**: GPT-2 implementation with BPE tokenization
+- **RAG (Retrieval-Augmented Generation)**: Context-aware generation with knowledge base retrieval
 - **Optional cuDNN Integration**: Fallback to optimized cuDNN operations
 - **Comprehensive Testing**: Full test suite with Google Test framework
 
@@ -23,6 +24,8 @@ DeepFuse is a high-performance C++17/CUDA deep learning framework designed to en
 - [Quick Start](#quick-start)
 - [Architecture](#architecture)
 - [Examples](#examples)
+  - [RAG (Retrieval-Augmented Generation)](#rag-retrieval-augmented-generation)
+  - [GPT-2 Language Model Training](#gpt-2-language-model-training)
 - [API Reference](#api-reference)
 - [Performance](#performance)
 - [Contributing](#contributing)
@@ -42,7 +45,7 @@ DeepFuse is a high-performance C++17/CUDA deep learning framework designed to en
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/DeepFuse.git
+git clone https://github.com/SensorVista/DeepFuse.git
 cd DeepFuse
 
 # Create build directory
@@ -171,6 +174,38 @@ for (auto& layer : model.layers()) {
 - **Flexible checkpointing**: Save/load individual layers or entire models  
 
 ## 📚 Examples
+
+### RAG (Retrieval-Augmented Generation)
+
+```cpp
+#include <dnn/rag/rag_model.cuh>
+#include <dnn/models/gpt2.cuh>
+#include <dnn/rag/document_store.cuh>
+
+// Create knowledge base
+auto doc_store = std::make_shared<dnn::DocumentStore>(tokenizer, 768, 512);
+doc_store->add_documents({
+    {"deepfuse", "DeepFuse is a CUDA-based deep learning framework..."},
+    {"rag", "RAG combines retrieval from knowledge base with generation..."}
+});
+
+// Create RAG model
+auto rag_model = std::make_unique<dnn::RAGModel<float>>(
+    generator_model, embedding_model, doc_store, tokenizer
+);
+
+// Compute embeddings for knowledge base
+rag_model->update_document_embeddings();
+
+// Generate with context retrieval
+std::string response = rag_model->generate("What is DeepFuse?", 100);
+```
+
+**Key Features:**
+- **Real-time retrieval**: Finds relevant documents for each query
+- **Context-aware generation**: Uses retrieved information for more accurate responses
+- **Joint training**: Trains both retriever and generator together
+- **Knowledge base management**: Add/remove documents dynamically
 
 ### GPT-2 Language Model Training
 
@@ -329,7 +364,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ```bash
 # Fork and clone the repository
-git clone https://github.com/your-username/DeepFuse.git
+git clone https://github.com/SensorVista/DeepFuse.git
 cd DeepFuse
 
 # Create development branch
@@ -361,9 +396,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/your-username/DeepFuse/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/DeepFuse/discussions)
-- **Documentation**: [Wiki](https://github.com/your-username/DeepFuse/wiki)
+- **Issues**: [GitHub Issues](https://github.com/SensorVista/DeepFuse/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/SensorVista/DeepFuse/discussions)
+- **Documentation**: [Wiki](https://github.com/SensorVista/DeepFuse/wiki)
 
 ---
 

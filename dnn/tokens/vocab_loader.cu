@@ -46,6 +46,17 @@ void VocabLoader::add_token(const std::string& token) {
     }
 }
 
+void VocabLoader::add_token(const std::string& token, int id) {
+    if (token_to_index_.count(token) == 0) {
+        // Ensure the index_to_token_ vector is large enough
+        if (id >= static_cast<int>(index_to_token_.size())) {
+            index_to_token_.resize(id + 1);
+        }
+        token_to_index_[token] = id;
+        index_to_token_[id] = token;
+    }
+}
+
 int VocabLoader::token_to_id(const std::string& token) const {
     auto it = token_to_index_.find(token);
     if (it != token_to_index_.end()) {
