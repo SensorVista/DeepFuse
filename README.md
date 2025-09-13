@@ -39,7 +39,8 @@ DeepFuse is a high-performance C++17/CUDA deep learning framework designed to en
 - **C++17 compatible compiler** (GCC 7+, Clang 5+, MSVC 2019+)
 - **CMake 3.15+**
 - **Optional**: cuDNN 8.0+ for accelerated operations
-- **Optional**: TBB for multi-GPU applications
+- **Required for multi-GPU**: TBB (Threading Building Blocks)
+- **Required for JSON processing**: nlohmann-json
 
 ### Build Instructions
 
@@ -66,11 +67,59 @@ ctest --output-on-failure
 
 ### Windows (Visual Studio)
 
+#### Method 1: Using vcpkg (Recommended)
+
 ```cmd
-# Open Developer Command Prompt
+# Install vcpkg if not already installed
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+.\bootstrap-vcpkg.bat
+
+# Install required dependencies
+vcpkg install tbb:x64-windows
+vcpkg install nlohmann-json:x64-windows
+
+# Integrate vcpkg with Visual Studio
+vcpkg integrate install
+
+# Set environment variables (run once)
+setx CMAKE_TOOLCHAIN_FILE "C:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake"
+setx CMAKE_PREFIX_PATH "C:\path\to\vcpkg\installed\x64-windows"
+setx TBB_DIR "C:\path\to\vcpkg\installed\x64-windows\share\tbb"
+
+# Build the project
 mkdir build && cd build
 cmake .. -G "Visual Studio 17 2022" -A x64
 cmake --build . --config Release
+```
+
+#### Method 2: Manual CMake Configuration
+
+```cmd
+# If vcpkg integration doesn't work, use explicit toolchain file
+mkdir build && cd build
+cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake
+cmake --build . --config Release
+```
+
+#### Troubleshooting Windows Build
+
+**Common Issues:**
+- **"No CUDA toolset found"**: Install CUDA Toolkit 11.0+ from NVIDIA
+- **"Could not find TBB"**: Ensure vcpkg is properly integrated or use explicit toolchain file
+- **Environment variables not working**: Close and reopen Command Prompt after setting with `setx`
+
+**Verify Installation:**
+```cmd
+# Check CUDA installation
+nvcc --version
+
+# Check vcpkg packages
+vcpkg list
+
+# Verify environment variables
+echo %CMAKE_TOOLCHAIN_FILE%
+echo %TBB_DIR%
 ```
 
 ## 🚀 Quick Start
@@ -362,6 +411,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ### Development Setup
 
+#### Linux/macOS
 ```bash
 # Fork and clone the repository
 git clone https://github.com/SensorVista/DeepFuse.git
@@ -370,12 +420,40 @@ cd DeepFuse
 # Create development branch
 git checkout -b feature/your-feature
 
+# Install dependencies (Ubuntu/Debian)
+sudo apt-get install libtbb-dev nlohmann-json3-dev
+
 # Build and test
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Debug
 make -j$(nproc)
 ctest
 ```
+
+#### Windows Development
+```bash
+# Fork and clone the repository
+git clone https://github.com/SensorVista/DeepFuse.git
+cd DeepFuse
+
+# Create development branch
+git checkout -b feature/your-feature
+
+# Install dependencies via vcpkg
+vcpkg install tbb:x64-windows nlohmann-json:x64-windows
+
+# Build and test
+mkdir build && cd build
+cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake
+cmake --build . --config Debug
+ctest --output-on-failure
+```
+
+#### Required Dependencies for Development
+- **TBB**: Multi-threading support for parallel operations
+- **nlohmann-json**: JSON parsing for model configurations and data loading
+- **Google Test**: Unit testing framework (automatically downloaded)
+- **CUDA Toolkit**: GPU acceleration (11.0+ required)
 
 ### Code Style
 
