@@ -1,4 +1,16 @@
 cmake_minimum_required(VERSION 4.0)
+
+# Configure CUDA host compiler before project() call
+if(UNIX AND NOT APPLE)
+    find_program(CLANG_14 clang-14)
+    if(CLANG_14)
+        set(CMAKE_CUDA_HOST_COMPILER ${CLANG_14})
+        message(STATUS "Using clang-14 as CUDA host compiler: ${CLANG_14}")
+    else()
+        message(WARNING "clang-14 not found, NVCC will use default host compiler")
+    endif()
+endif()
+
 project(DeepFuse 
     DESCRIPTION "Deep Learning Library for CUDA."
     LANGUAGES C CUDA CXX)
@@ -13,9 +25,16 @@ endif()
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Set CUDA standard
+# Set CUDA standard - ensure NVCC uses the same C++ standard
 set(CMAKE_CUDA_STANDARD 17)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+
+# Force NVCC to use C++17 with clang-14
+if(UNIX AND NOT APPLE)
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++17")
+endif()
 
 # Find CUDA
 find_package(CUDAToolkit REQUIRED)
@@ -53,16 +72,27 @@ FetchContent_MakeAvailable(
   googletest
 )
 
-# Fetch nlohmann/json
-FetchContent_Declare(
-  json
-  GIT_REPOSITORY    https://github.com/nlohmann/json.git
-  GIT_TAG           v3.11.3  # Latest stable version
-)
-
-FetchContent_MakeAvailable(
-  json
-)
+# Find or fetch nlohmann/json
+find_package(nlohmann_json QUIET)
+if(NOT nlohmann_json_FOUND)
+    # Fallback to FetchContent if not found via find_package (Linux only)
+    if(UNIX AND NOT APPLE)
+        FetchContent_Declare(
+          json
+          GIT_REPOSITORY    https://github.com/nlohmann/json.git
+          GIT_TAG           v3.11.3  # Latest stable version
+        )
+        
+        FetchContent_MakeAvailable(
+          json
+        )
+        message(STATUS "Using nlohmann/json from FetchContent")
+    else()
+        message(FATAL_ERROR "nlohmann/json not found. On Windows, please install via vcpkg: vcpkg install nlohmann-json:x64-windows")
+    endif()
+else()
+    message(STATUS "Using system nlohmann/json")
+endif()
 
 # Add core DNN CUDA library
 add_subdirectory(dnn)

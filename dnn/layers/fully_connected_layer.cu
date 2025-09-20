@@ -388,16 +388,16 @@ template<typename TT>
 void FullyConnectedLayer<TT>::save(std::ostream& out) const {
     out.write(reinterpret_cast<const char*>(&in_features_), sizeof(in_features_));
     out.write(reinterpret_cast<const char*>(&out_features_), sizeof(out_features_));
-    weights_.save(out);
-    bias_.save(out);
+    this->weights_.save(out);
+    this->bias_.save(out);
 }
 
 template<typename TT>
 void FullyConnectedLayer<TT>::load(std::istream& in) {
     in.read(reinterpret_cast<char*>(&in_features_), sizeof(in_features_));
     in.read(reinterpret_cast<char*>(&out_features_), sizeof(out_features_));
-    weights_.load(in);
-    bias_.load(in);
+    this->weights_.load(in);
+    this->bias_.load(in);
 }
 
 // Explicit template instantiations

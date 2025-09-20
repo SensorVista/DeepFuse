@@ -324,9 +324,19 @@ bool tensor<TT>::equals(const tensor<TT>& other) const {
     download(host_a.data());
     other.download(host_b.data());
 
-    for (int i = 0; i < total_size_; ++i)
-        if (host_a[i] != host_b[i])
-            return false;
+    for (int i = 0; i < total_size_; ++i) {
+        // Handle half-precision types that don't have host-side comparison operators
+        if constexpr (std::is_same_v<TT, __half>) {
+            if (__half2float(host_a[i]) != __half2float(host_b[i]))
+                return false;
+        } else if constexpr (std::is_same_v<TT, __nv_bfloat16>) {
+            if (__bfloat162float(host_a[i]) != __bfloat162float(host_b[i]))
+                return false;
+        } else {
+            if (host_a[i] != host_b[i])
+                return false;
+        }
+    }
 
     return true;
 }

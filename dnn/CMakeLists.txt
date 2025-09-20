@@ -26,6 +26,16 @@ add_library(${TARGET_NAME} STATIC ${SOURCES})
 # Make core headers available to dependents
 target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_SOURCE_DIR})
 
+# Add nlohmann/json include directories for linter/IDE support (Linux only)
+if(UNIX AND NOT APPLE)
+    if(TARGET nlohmann_json::nlohmann_json)
+        get_target_property(NLOHMANN_JSON_INCLUDE_DIRS nlohmann_json::nlohmann_json INTERFACE_INCLUDE_DIRECTORIES)
+        if(NLOHMANN_JSON_INCLUDE_DIRS)
+            target_include_directories(${TARGET_NAME} PUBLIC ${NLOHMANN_JSON_INCLUDE_DIRS})
+        endif()
+    endif()
+endif()
+
 # Attach headers for IDE only (no compile impact)
 target_sources(${TARGET_NAME} PRIVATE ${HEADERS})
 
@@ -33,6 +43,11 @@ target_sources(${TARGET_NAME} PRIVATE ${HEADERS})
 target_link_libraries(${TARGET_NAME} PUBLIC 
     CUDA::cudart
 )
+
+# Link nlohmann/json (Linux only - Windows uses vcpkg)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(${TARGET_NAME} PUBLIC nlohmann_json::nlohmann_json)
+endif()
 
 if(DEFINED USE_CUDNN AND USE_CUDNN)
     target_link_libraries(${TARGET_NAME} PUBLIC 

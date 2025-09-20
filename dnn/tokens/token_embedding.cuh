@@ -29,8 +29,8 @@ public:
 
     void initialize_weights();
 
-    std::vector<tensor<T>*> parameters() override { return {&weights_, &bias_}; }
-    std::vector<tensor<T>*> gradients() override { return {&grad_weights_, &grad_bias_}; }
+    std::vector<tensor<T>*> parameters() override { return {&this->weights_, &this->bias_}; }
+    std::vector<tensor<T>*> gradients() override { return {&this->grad_weights_, &this->grad_bias_}; }
 
     void save(std::ostream& out) const override;
     void load(std::istream& in) override;

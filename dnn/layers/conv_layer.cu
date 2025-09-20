@@ -543,8 +543,8 @@ void ConvLayer<T>::save(std::ostream& out) const {
     out.write(reinterpret_cast<const char*>(&stride_), sizeof(stride_));
     out.write(reinterpret_cast<const char*>(&padding_), sizeof(padding_));
     out.write(reinterpret_cast<const char*>(&use_sparse_connectivity_), sizeof(use_sparse_connectivity_));
-    weights_.save(out);
-    bias_.save(out);
+    this->weights_.save(out);
+    this->bias_.save(out);
     if (use_sparse_connectivity_) {
         int mask_size = out_channels_ * in_channels_;
         std::vector<uint8_t> mask(mask_size);
@@ -564,8 +564,8 @@ void ConvLayer<T>::load(std::istream& in) {
     in.read(reinterpret_cast<char*>(&stride_), sizeof(stride_));
     in.read(reinterpret_cast<char*>(&padding_), sizeof(padding_));
     in.read(reinterpret_cast<char*>(&use_sparse_connectivity_), sizeof(use_sparse_connectivity_));
-    weights_.load(in);
-    bias_.load(in);
+    this->weights_.load(in);
+    this->bias_.load(in);
     if (use_sparse_connectivity_) {
         int mask_size = out_channels_ * in_channels_;
         std::vector<uint8_t> mask(mask_size);
