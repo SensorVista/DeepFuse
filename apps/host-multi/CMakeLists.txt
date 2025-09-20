@@ -1,7 +1,15 @@
 # Define app name
 set(TARGET_NAME host-multi)
 
-find_package(TBB REQUIRED)
+# Try to find TBB, but make it optional for Linux
+find_package(TBB QUIET)
+if(NOT TBB_FOUND)
+    message(STATUS "TBB not found, using std::thread as fallback")
+    set(USE_TBB OFF)
+else()
+    set(USE_TBB ON)
+    message(STATUS "TBB found, using TBB for parallelization")
+endif()
 
 # Collect application sources
 file(GLOB SOURCES CONFIGURE_DEPENDS
@@ -38,7 +46,13 @@ endif()
 target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
 
 # Link core DNN library
-target_link_libraries(${TARGET_NAME} PRIVATE dnn TBB::tbb)
+if(USE_TBB)
+    target_link_libraries(${TARGET_NAME} PRIVATE dnn TBB::tbb)
+    target_compile_definitions(${TARGET_NAME} PRIVATE USE_TBB)
+else()
+    target_link_libraries(${TARGET_NAME} PRIVATE dnn)
+    target_compile_definitions(${TARGET_NAME} PRIVATE USE_STD_THREAD)
+endif()
 
 # Enable cuDNN
 if(DEFINED USE_CUDNN AND USE_CUDNN)

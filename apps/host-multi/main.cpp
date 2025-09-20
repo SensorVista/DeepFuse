@@ -1,8 +1,11 @@
 #include <dnn/core/cuda.cuh>
 #include <dnn/models/perceptron.cuh>
 #include <dnn/utils/common.cuh>
+
+#ifdef USE_TBB
 #include <tbb/parallel_for.h>
 #include <tbb/task_arena.h>
+#endif
 
 #include <atomic>
 #include <cmath>
@@ -164,7 +167,9 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // Execute with TBB
+        // Execute with parallelization
+#ifdef USE_TBB
+        // Use TBB for parallel execution
         tbb::parallel_for(tbb::blocked_range<size_t>(0, tasks.size()),
             [&](const tbb::blocked_range<size_t>& r) {
                 for (size_t i = r.begin(); i != r.end(); ++i) {
@@ -172,6 +177,32 @@ int main(int argc, char* argv[]) {
                 }
             }
         );
+#else
+        // Use std::thread for parallel execution
+        const size_t num_threads = std::min(tasks.size(), static_cast<size_t>(std::thread::hardware_concurrency()));
+        std::vector<std::thread> threads;
+        
+        auto worker = [&](size_t start, size_t end) {
+            for (size_t i = start; i < end; ++i) {
+                tasks[i]();
+            }
+        };
+        
+        const size_t tasks_per_thread = tasks.size() / num_threads;
+        const size_t remaining_tasks = tasks.size() % num_threads;
+        
+        size_t current_start = 0;
+        for (size_t t = 0; t < num_threads; ++t) {
+            size_t current_end = current_start + tasks_per_thread + (t < remaining_tasks ? 1 : 0);
+            threads.emplace_back(worker, current_start, current_end);
+            current_start = current_end;
+        }
+        
+        // Wait for all threads to complete
+        for (auto& thread : threads) {
+            thread.join();
+        }
+#endif
 
         // Calculate final accuracy
         float final_accuracy = static_cast<float>(correct_predictions) / 

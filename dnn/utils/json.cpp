@@ -3032,10 +3032,13 @@ bool json::get_string(const cJSON* json, const std::string& name, char* result, 
 		return false;
 	}
 
-	if (max_size > 0)
-		strcpy_s(result, max_size, v->valuestring);
-	else
-		std::strcpy(result, v->valuestring);
+	if (max_size > 0) {
+		// Use strncpy for bounded copy to ensure null termination
+		strncpy(result, v->valuestring, max_size - 1);
+		result[max_size - 1] = '\0';
+	} else {
+		strcpy(result, v->valuestring);
+	}
 	return true;
 }
 

@@ -1,4 +1,24 @@
 cmake_minimum_required(VERSION 4.0)
+
+# Linux-specific CUDA host compiler setup (must be before project() command)
+if(UNIX AND NOT APPLE)
+    # Check if clang-14 is available and set it as CUDA host compiler
+    find_program(CLANG14_EXECUTABLE clang-14)
+    if(CLANG14_EXECUTABLE)
+        set(CMAKE_CUDA_HOST_COMPILER ${CLANG14_EXECUTABLE})
+        message(STATUS "Using clang-14 as CUDA host compiler: ${CLANG14_EXECUTABLE}")
+    else()
+        # Fallback: try to find a compatible GCC version
+        find_program(GCC11_EXECUTABLE gcc-11)
+        if(GCC11_EXECUTABLE)
+            set(CMAKE_CUDA_HOST_COMPILER ${GCC11_EXECUTABLE})
+            message(STATUS "Using gcc-11 as CUDA host compiler: ${GCC11_EXECUTABLE}")
+        else()
+            message(WARNING "No compatible CUDA host compiler found. Please install clang-14 or gcc-11")
+        endif()
+    endif()
+endif()
+
 project(DeepFuse 
     DESCRIPTION "Deep Learning Library for CUDA."
     LANGUAGES C CUDA CXX)
@@ -64,6 +84,4 @@ add_subdirectory(apps/lenet5)
 add_subdirectory(apps/perceptron)
 add_subdirectory(apps/resnet20)
 add_subdirectory(apps/gpt2)
-if (NOT UNIX)
-    add_subdirectory(apps/host-multi)
-endif()
+add_subdirectory(apps/host-multi)

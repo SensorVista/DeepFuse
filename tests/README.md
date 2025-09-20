@@ -90,7 +90,10 @@ make
 ctest
 
 # Run specific test
-./tests/core/cuda_test
+./tests/unit_tests
+
+# Note: Test discovery is disabled on Linux due to regex compatibility
+# Tests can be run directly via the unit_tests executable
 ```
 
 ### Test Categories
@@ -131,3 +134,4 @@ When adding new tests:
 3. **Error Handling**: Test both success and failure cases
 4. **Performance**: Include basic performance tests where relevant
 5. **Documentation**: Document any special test requirements or setup
+6. **Cross-Platform**: Tests are designed to work on both Windows and Linux with appropriate platform-specific handling

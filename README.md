@@ -101,7 +101,9 @@ DeepFuse/
 - CUDA Toolkit (compatible with your GPU)
 - CMake (version 4.0 or higher)
 - Visual Studio 2019 or later (for Windows) or GCC/G++ (for Linux)
+- Linux: clang-14 or gcc-11 (for CUDA host compiler compatibility)
 - Optional: cuDNN for accelerated operations
+- Optional: TBB (Threading Building Blocks) for enhanced parallelization
 
 ## Quick Start
 
@@ -124,6 +126,11 @@ mkdir build
 cd build
 cmake ..
 make
+
+# Build specific targets
+make unit_tests          # Build unit tests
+make host-multi          # Build multi-GPU application
+make lenet5 perceptron resnet20  # Build example applications
 ```
 
 ## Performance Analysis
@@ -154,6 +161,8 @@ make
 - Ensure CUDA Toolkit is properly installed and the environment variables are set correctly
 - For Windows, make sure you're using a compatible version of Visual Studio
 - For Linux, ensure you have the necessary CUDA development packages installed
+- **Linux CUDA Host Compiler**: If you encounter "No supported gcc/g++ host compiler found", install clang-14 or gcc-11
+- **Cross-Platform Compatibility**: The framework maintains Windows compatibility while supporting Linux builds
 - Check the [tests/](tests/) for known issues and solutions
 
 ## License

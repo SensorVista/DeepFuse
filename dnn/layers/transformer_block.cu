@@ -47,7 +47,12 @@ tensor<T> TransformerBlock<T>::forward(const tensor<T>& input) {
     tensor<T> add1(attn_out.shape());
     add1.copy_from(attn_out);
     for (int i = 0; i < add1.size(); ++i) {
-        add1.data()[i] += residual1_.data()[i];
+        if constexpr (std::is_same<T, __half>::value) {
+            float result = __half2float(add1.data()[i]) + __half2float(residual1_.data()[i]);
+            add1.data()[i] = __float2half(result);
+        } else {
+            add1.data()[i] += residual1_.data()[i];
+        }
     }
 
     // Resize and copy second residual
@@ -67,7 +72,12 @@ tensor<T> TransformerBlock<T>::forward(const tensor<T>& input) {
     tensor<T> final_out(output.shape());
     final_out.copy_from(output);
     for (int i = 0; i < final_out.size(); ++i) {
-        final_out.data()[i] += residual2_.data()[i];
+        if constexpr (std::is_same<T, __half>::value) {
+            float result = __half2float(final_out.data()[i]) + __half2float(residual2_.data()[i]);
+            final_out.data()[i] = __float2half(result);
+        } else {
+            final_out.data()[i] += residual2_.data()[i];
+        }
     }
 
     return final_out;
@@ -86,7 +96,12 @@ tensor<T> TransformerBlock<T>::backward(const tensor<T>& grad_output, const tens
 
     // Add to residual
     for (int i = 0; i < grad_norm2.size(); ++i) {
-        grad_norm2.data()[i] += grad_mlp.data()[i];
+        if constexpr (std::is_same<T, __half>::value) {
+            float result = __half2float(grad_norm2.data()[i]) + __half2float(grad_mlp.data()[i]);
+            grad_norm2.data()[i] = __float2half(result);
+        } else {
+            grad_norm2.data()[i] += grad_mlp.data()[i];
+        }
     }
 
     // Backprop Attention
@@ -95,7 +110,12 @@ tensor<T> TransformerBlock<T>::backward(const tensor<T>& grad_output, const tens
 
     // Add to residual
     for (int i = 0; i < grad_norm1.size(); ++i) {
-        grad_norm1.data()[i] += grad_attn_out.data()[i];
+        if constexpr (std::is_same<T, __half>::value) {
+            float result = __half2float(grad_norm1.data()[i]) + __half2float(grad_attn_out.data()[i]);
+            grad_norm1.data()[i] = __float2half(result);
+        } else {
+            grad_norm1.data()[i] += grad_attn_out.data()[i];
+        }
     }
 
     return grad_norm1;

@@ -81,7 +81,12 @@ tensor<T> EmbeddingLayer<T>::forward(const tensor<int>& input_indices) {
     // Add bias
     for (int i = 0; i < output.size(); ++i) {
         int d = i % embedding_dim_;
-        output.data()[i] += this->bias_.data()[d];
+        if constexpr (std::is_same<T, __half>::value) {
+            float result = __half2float(output.data()[i]) + __half2float(this->bias_.data()[d]);
+            output.data()[i] = __float2half(result);
+        } else {
+            output.data()[i] += this->bias_.data()[d];
+        }
     }
 
     return output;
@@ -108,7 +113,12 @@ tensor<T> EmbeddingLayer<T>::backward(const tensor<T>& grad_output, const tensor
     // Compute bias gradient
     for (int i = 0; i < grad_output.size(); ++i) {
         int d = i % embedding_dim_;
-        this->grad_bias_.data()[d] += grad_output.data()[i];
+        if constexpr (std::is_same<T, __half>::value) {
+            float result = __half2float(this->grad_bias_.data()[d]) + __half2float(grad_output.data()[i]);
+            this->grad_bias_.data()[d] = __float2half(result);
+        } else {
+            this->grad_bias_.data()[d] += grad_output.data()[i];
+        }
     }
 
     // Return gradient for input indices (not used in practice)

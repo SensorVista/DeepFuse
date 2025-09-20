@@ -31,8 +31,9 @@ Advanced multi-GPU training application with host-side parallelization. Features
 - Thread-safe model execution
 - Dynamic GPU memory management
 - Parallel data processing
-- TBB (Threading Building Blocks) integration
-- NVMe data loading capabilities
+- TBB (Threading Building Blocks) integration with std::thread fallback
+- Cross-platform NVMe data loading capabilities (Windows IOCP + Linux AIO)
+- Asynchronous I/O with pinned memory optimization
 
 ## Building and Running
 
@@ -55,6 +56,8 @@ make
 - C++17 or higher
 - CMake 4.0 or higher
 - NVMe support (optional, for host-multi example)
+- TBB (optional, for enhanced parallelization in host-multi)
+- Cross-platform compatibility: Windows (IOCP) and Linux (AIO)
 
 ## Performance Considerations
 
@@ -80,6 +83,9 @@ TrainingTask task{
     batch_size,
     num_epochs
 };
+
+#ifdef USE_TBB
+// Use TBB for parallel execution (if available)
 tbb::parallel_for(tbb::blocked_range<size_t>(0, tasks.size()),
     [&](const tbb::blocked_range<size_t>& r) {
         for (size_t i = r.begin(); i != r.end(); ++i) {
@@ -87,6 +93,13 @@ tbb::parallel_for(tbb::blocked_range<size_t>(0, tasks.size()),
         }
     }
 );
+#else
+// Fallback to std::thread for parallel execution
+const size_t num_threads = std::min(tasks.size(), 
+    static_cast<size_t>(std::thread::hardware_concurrency()));
+std::vector<std::thread> threads;
+// ... thread management code
+#endif
 ```
 
 ## Notes
