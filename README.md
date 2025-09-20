@@ -1,5 +1,11 @@
 # DeepFuse: Scalable Transformers on Commodity GPUs
 
+[![Windows](https://img.shields.io/badge/Windows-0078D6?style=flat&logo=windows&logoColor=white)](https://github.com/SensorVista/DeepFuse)
+[![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat&logo=linux&logoColor=black)](https://github.com/SensorVista/DeepFuse)
+[![CUDA](https://img.shields.io/badge/CUDA-76B900?style=flat&logo=nvidia&logoColor=white)](https://developer.nvidia.com/cuda-toolkit)
+[![C++](https://img.shields.io/badge/C++-17-00599C?style=flat&logo=cplusplus&logoColor=white)](https://en.cppreference.com/w/cpp/17)
+[![CMake](https://img.shields.io/badge/CMake-4.0-064F8C?style=flat&logo=cmake&logoColor=white)](https://cmake.org/)
+
 C++ 17 CUDA framework. Support next-gen Blackwell architecture and legacy CUDA devices. Supports e5m2 and e4m3 8-bit 
 quantization. FP32, FP16 and BF16. Advanced support for device management, tensor ops,  cuBLAS and cuDNN.
 
