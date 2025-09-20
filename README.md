@@ -177,7 +177,8 @@ All rights reserved.
 
 Copyright © 2025 SensorVista, LLC
 
-This code and documentation are provided for reference only.  
+This code and documentation are provided for reference only.
+
 No license is granted for use, modification, or redistribution without explicit written permission.
 
 For licensing inquiries and research partnerships, contact SensorVista, LLC.
