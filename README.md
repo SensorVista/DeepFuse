@@ -1,9 +1,12 @@
 # DeepFuse: Scalable Transformers on Commodity GPUs
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CUDA](https://img.shields.io/badge/CUDA-11.0%2B-blue.svg)](https://developer.nvidia.com/cuda-toolkit)
+[![CUDA](https://img.shields.io/badge/CUDA-12.6.8-blue.svg)](https://developer.nvidia.com/cuda-toolkit)
+[![cuDNN](https://img.shields.io/badge/cuDNN-9.4.0-green.svg)](https://developer.nvidia.com/cudnn)
 [![C++](https://img.shields.io/badge/C%2B%2B-17-red.svg)](https://en.cppreference.com/w/cpp/17)
 [![CMake](https://img.shields.io/badge/CMake-3.15%2B-green.svg)](https://cmake.org/)
+[![Linux](https://img.shields.io/badge/Linux-supported-orange.svg)](https://www.linux.org/)
+[![Windows](https://img.shields.io/badge/Windows-supported-blue.svg)](https://www.microsoft.com/windows)
 
 DeepFuse is a high-performance C++17/CUDA deep learning framework designed to enable large-scale transformer training on consumer GPUs. By implementing innovative memory management techniques and layer-serialized execution, DeepFuse breaks the VRAM ceiling and enables billion-parameter models on hardware previously limited to much smaller networks.
 
@@ -35,10 +38,10 @@ DeepFuse is a high-performance C++17/CUDA deep learning framework designed to en
 
 ### Prerequisites
 
-- **CUDA Toolkit 11.0+** with compatible GPU
+- **CUDA Toolkit 12.6.8** with compatible GPU
+- **cuDNN Version: 9.4.0** for accelerated operations
 - **C++17 compatible compiler** (GCC 7+, Clang 5+, MSVC 2019+)
 - **CMake 3.15+**
-- **Optional**: cuDNN 8.0+ for accelerated operations
 - **Required for multi-GPU**: TBB (Threading Building Blocks)
 - **Required for JSON processing**: nlohmann-json
 
