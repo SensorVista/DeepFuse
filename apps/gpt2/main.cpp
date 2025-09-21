@@ -12,8 +12,6 @@
 #include <string>
 #include <random>
 #include <cmath>
-#include <codecvt>
-#include <locale>
 #include <chrono>
 #include <algorithm>
 #include <stdexcept>
@@ -119,12 +117,17 @@ split_train_val_paths(const std::vector<std::filesystem::path>& paths, float val
 
 // Helper: Read file contents as UTF-8
 std::string read_file_contents(const std::filesystem::path& path) {
-    std::ifstream file(path);
+    std::ifstream file(path, std::ios::binary);
     if (!file.is_open()) throw std::runtime_error("Could not open file: " + path.string());
-    file.imbue(std::locale(file.getloc(), new std::codecvt_utf8<char, 0x10ffff, std::consume_header>));
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    return buffer.str();
+    
+    // Read the entire file into a string
+    std::string content;
+    file.seekg(0, std::ios::end);
+    content.reserve(file.tellg());
+    file.seekg(0, std::ios::beg);
+    content.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    
+    return content;
 }
 
 struct TrainingConfig {

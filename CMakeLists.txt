@@ -61,16 +61,20 @@ include_directories(${CMAKE_SOURCE_DIR} ${CUDAToolkit_INCLUDE_DIR})
 enable_testing()
 include(FetchContent)
 
-# Fetch GoogleTest
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY    https://github.com/google/googletest.git
-  GIT_TAG           b796f7d44681514f58a683a3a71ff17c94edb0c1 # version 1.13.0
-)
-
-FetchContent_MakeAvailable(
-  googletest
-)
+# Try to find system GoogleTest first
+find_package(GTest QUIET)
+if(NOT GTest_FOUND)
+    # Fallback to FetchContent if system version not found
+    FetchContent_Declare(
+      googletest
+      GIT_REPOSITORY    https://github.com/google/googletest.git
+      GIT_TAG           v1.14.0  # Updated version for GCC 13 compatibility
+    )
+    
+    FetchContent_MakeAvailable(
+      googletest
+    )
+endif()
 
 # Find or fetch nlohmann/json
 find_package(nlohmann_json QUIET)
@@ -106,6 +110,4 @@ add_subdirectory(apps/perceptron)
 add_subdirectory(apps/resnet20)
 add_subdirectory(apps/gpt2)
 add_subdirectory(apps/rag)
-if (NOT UNIX)
-    add_subdirectory(apps/host-multi)
-endif()
+add_subdirectory(apps/host-multi)  # Now supports both Windows and Linux

@@ -4,6 +4,13 @@
 #include <tbb/parallel_for.h>
 #include <tbb/task_arena.h>
 
+// Platform-specific NVMe loader (optional - not used in current implementation)
+#ifdef _WIN32
+    #include "NVMeLoader.hpp"
+#else
+    #include "NVMeLoader_Linux.hpp"
+#endif
+
 #include <atomic>
 #include <cmath>
 #include <iostream>

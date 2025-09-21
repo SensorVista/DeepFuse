@@ -166,8 +166,8 @@ tensor<T> TokenEmbedding<T>::backward(const tensor<T>& grad_output) {
     int batch_size = in_shape[0];
     int seq_len = in_shape[1];
 
-    grad_weights_.zero();
-    grad_bias_.zero();
+    this->grad_weights_.zero();
+    this->grad_bias_.zero();
 
     const int block = 256;
     int total_elements = batch_size * seq_len * embedding_dim_;
@@ -176,8 +176,8 @@ tensor<T> TokenEmbedding<T>::backward(const tensor<T>& grad_output) {
     embedding_backward_kernel<<<grid, block>>>(
         input.data(),
         grad_output.data(),
-        grad_weights_.data(),
-        grad_bias_.data(),
+        this->grad_weights_.data(),
+        this->grad_bias_.data(),
         vocab_size_,
         embedding_dim_,
         batch_size * seq_len

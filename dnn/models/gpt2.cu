@@ -57,10 +57,10 @@ void Gpt2<T>::train_step(const tensor<T>& input, const tensor<T>& target) {
 template<typename T>
 void Gpt2<T>::train_step(const std::vector<int>& input_token_ids, const std::vector<int>& target_token_ids) {
     int B = 1;
-    int T = static_cast<int>(input_token_ids.size());
-    dnn::tensor<int> input_tensor({B, T});
+    int seq_len = static_cast<int>(input_token_ids.size());
+    dnn::tensor<int> input_tensor({B, seq_len});
     input_tensor.upload(input_token_ids.data());
-    dnn::tensor<int> target_tensor({B, T});
+    dnn::tensor<int> target_tensor({B, seq_len});
     target_tensor.upload(target_token_ids.data());
 
     auto* embedding_layer = dynamic_cast<dnn::LayerAsymmetric<float, int>*>(token_embedding_.get());
@@ -77,19 +77,19 @@ void Gpt2<T>::train_step(const std::vector<int>& input_token_ids, const std::vec
         x = typed_layer->forward(x);
     }
 
-    x.reshape({B * T, hidden_dim_});
+    x.reshape({B * seq_len, hidden_dim_});
     auto* final_layer = dynamic_cast<dnn::FullyConnectedLayer<float>*>(final_fc_.get());
     if (!final_layer) throw std::runtime_error("Final layer is not FullyConnectedLayer<float>");
     dnn::tensor<float> logits = final_layer->forward(x);
 
-    target_tensor.reshape({B * T});
+    target_tensor.reshape({B * seq_len});
     auto* ce_loss = dynamic_cast<dnn::CrossEntropyLoss<float>*>(this->loss_.get());
     if (!ce_loss) throw std::runtime_error("Loss is not CrossEntropyLoss<float>");
     this->current_loss_ = ce_loss->compute(logits, target_tensor);
     dnn::tensor<float> grad = ce_loss->compute_gradient(logits, target_tensor);
 
     grad = final_layer->backward(grad);
-    grad.reshape({B, T, hidden_dim_});
+    grad.reshape({B, seq_len, hidden_dim_});
     for (int i = static_cast<int>(transformer_blocks_.size()) - 1; i >= 0; --i) {
         auto* typed_layer = dynamic_cast<dnn::Layer<float>*>(transformer_blocks_[i].get());
         grad = typed_layer->backward(grad);
